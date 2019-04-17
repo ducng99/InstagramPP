@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.0
-// @updateURL    https://maxhyt.github.io/InstagramPlusPlus/InstagramPlusPlus.meta.js
-// @downloadURL  https://maxhyt.github.io/InstagramPlusPlus/InstagramPlusPlus.user.js
+// @version      3.1
+// @updateURL    https://ducng99.github.io/InstagramPP/InstagramPlusPlus.meta.js
+// @downloadURL  https://ducng99.github.io/InstagramPP/InstagramPlusPlus.user.js
 // ==/UserScript==
