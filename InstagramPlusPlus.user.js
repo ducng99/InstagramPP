@@ -73,7 +73,7 @@
                 }
 
                 if (feedMenu.innerHTML.indexOf("Download") === -1)
-                    feedMenu.innerHTML += "<span class=\"_15y0l\"><a class=\"coreDownloadSaveButton\" href=\"" + src + "\" download target=\"_blank\"><button class=\"dCJp8 afkep _0mzm-\"><span style=\"background-image: url(https://maxhyt.github.io/InstagramPlusPlus/download.png); width: 24px; height: 24px;\"></span></button></a></span>";
+                    feedMenu.innerHTML += "<span class=\"_15y0l\"><a class=\"coreDownloadSaveButton\" href=\"" + src + "\" download target=\"_blank\"><button class=\"dCJp8 afkep _0mzm-\"><span style=\"background-image: url(https://ducng99.github.io/InstagramPP/download.png); width: 24px; height: 24px;\"></span></button></a></span>";
             }
             dlButton();
         }, 1000);
