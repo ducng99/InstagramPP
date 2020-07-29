@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.2
+// @version      3.3
 // @description  Instagram++ Help Tools
 // @author       Maxhyt
 // @homepage     https://ducng99.github.io/InstagramPP
@@ -47,7 +47,7 @@
                 let src;
                 let picLink;
 
-                let picCount = $(article).find("div.ijCUd._3eoV-.IjCL9._19dxx");
+                let picCount = $(article).find("div._3eoV-.IjCL9");
                 if (picCount.length > 0)
                 {
                     let current = $(picCount).find(".XCodT")[0];
