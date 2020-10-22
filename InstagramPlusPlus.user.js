@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.3
+// @version      3.4
 // @description  Instagram++ Help Tools
 // @author       Maxhyt
 // @homepage     https://ducng99.github.io/InstagramPP
@@ -10,39 +10,43 @@
 // @updateURL    https://ducng99.github.io/InstagramPP/InstagramPlusPlus.meta.js
 // @downloadURL  https://ducng99.github.io/InstagramPP/InstagramPlusPlus.user.js
 // @require      https://code.jquery.com/jquery-3.5.1.min.js
+// @run-at       document-idle
 // ==/UserScript==
 
 (function () {
     var $ = jQuery;
+    
+    setInterval(MainLoop, 2000);
 
-    (function dlButton()
-    {
-        setTimeout(function () {
+    function MainLoop() {
 //Story
-            let storyMenu = $(".mt3GC")[0];
-            if (typeof storyMenu !== "undefined" && storyMenu.innerHTML.indexOf("Download") === -1 && window.location.href.indexOf("stories") !== -1)
+        let storyMenu = $(".mt3GC")[0];
+        if (typeof storyMenu !== "undefined" && storyMenu.innerHTML.indexOf("Download") === -1 && window.location.href.indexOf("stories") !== -1)
+        {
+            let stPicLink = $(".y-yJ5.i1HvM")[0];
+            let stVidLink = $(".y-yJ5.OFkrO")[0];
+
+            if (typeof stPicLink !== "undefined")
             {
-                let stPicLink = $(".y-yJ5.i1HvM")[0];
-                let stVidLink = $(".y-yJ5.OFkrO")[0];
-
-                if (typeof stPicLink !== "undefined")
-                {
-                    storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" href=\"" + $(stPicLink).attr("srcset").split("750w,")[1].split(" 1080w")[0] + "\" download target=\"_blank\">Download</a>";
-                }
-                else if (typeof stVidLink !== "undefined")
-                {
-                    storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" href=\"" + $($(stVidLink).find("source")[0]).attr("src") + "\" download target=\"_blank\">Download</a>";
-                }
-                else
-                {
-                    storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" onclick=\"alert('Error: Could not get link');\">Download</a>";
-                }
-
-                storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" target=\"_blank\" href=\"https://maxhyt.github.io/InstagramPlusPlus\">IG++ Guide</a>";
+                storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" href=\"" + $(stPicLink).attr("srcset").split("750w,")[1].split(" 1080w")[0] + "\" download target=\"_blank\">Download</a>";
             }
-//News Feed
-            let articles = $("article.M9sTE.L_LMM");
-            for (let article of articles)
+            else if (typeof stVidLink !== "undefined")
+            {
+                storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" href=\"" + $($(stVidLink).find("source")[0]).attr("src") + "\" download target=\"_blank\">Download</a>";
+            }
+            else
+            {
+                storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" onclick=\"alert('Error: Could not get link');\">Download</a>";
+            }
+
+            storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" target=\"_blank\" href=\"https://maxhyt.github.io/InstagramPlusPlus\">IG++ Guide</a>";
+        }
+        //News Feed
+        let articles = $("article.M9sTE.L_LMM");
+        $.each(articles, function(i, article)
+        {
+            let feedMenu = $(article).find(".ltpMr.Slqrh")[0];
+            if (feedMenu.innerHTML.indexOf("Download") === -1)
             {
                 let src;
                 let picLink;
@@ -79,47 +83,40 @@
                     src = vidLink.src;
                 }
 
-                let feedMenu = $(article).find(".ltpMr.Slqrh")[0];
-
                 let arrowArticleLeft = $(".coreSpriteLeftPaginationArrow")[0];
                 if (typeof arrowArticleLeft !== "undefined")
                 {
-                    arrowArticleLeft.onclick = function() { setTimeout(reset, 800); };
+                    arrowArticleLeft.onclick = function() { reset(article, 800); };
                 }
 
                 let arrowArticleRight = $(".coreSpriteRightPaginationArrow")[0];
                 if (typeof arrowArticleRight !== "undefined")
                 {
-                    arrowArticleRight.onclick = function() { setTimeout(reset, 800); };
+                    arrowArticleRight.onclick = function() { reset(article, 800); };
                 }
 
                 let arrowSwitchLeft = $(article).find(".coreSpriteLeftChevron")[0];
                 if (typeof arrowSwitchLeft !== "undefined")
                 {
-                    arrowSwitchLeft.onclick = function() { setTimeout(reset, 500); };
+                    arrowSwitchLeft.onclick = function() { reset(article, 500); };
                 }
 
                 let arrowSwitchRight = $(article).find(".coreSpriteRightChevron")[0];
                 if (typeof arrowSwitchRight !== "undefined")
                 {
-                    arrowSwitchRight.onclick = function() { setTimeout(reset, 500); };
+                    arrowSwitchRight.onclick = function() { reset(article, 500); };
                 }
-
-                if (feedMenu.innerHTML.indexOf("Download") === -1)
-                {
-                    feedMenu.innerHTML += "<span class=\"_15y0l\"><a class=\"coreDownloadSaveButton\" href=\"" + src + "\" download target=\"_blank\"><button class=\"dCJp8 afkep _0mzm-\"><span style=\"background-image: url(https://ducng99.github.io/InstagramPP/download.png); width: 24px; height: 24px;\"></span></button></a></span>";
-                }
+            
+                feedMenu.innerHTML += '<span><a class="coreDownloadSaveButton" href="' + src + '" download target="_blank"><button class="dCJp8 afkep"><svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-download" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></button></a></span>';
             }
-            dlButton();
-        }, 1000);
-    })();
+        });
+    }
 
-    function reset()
+    function reset(article, timeout)
     {
-        let tmp = $(".coreDownloadSaveButton");
-        for (let button of tmp)
-        {
-            $(button).parent().remove();
-        }
+        setTimeout(() => {
+            $(article).find(".coreDownloadSaveButton").remove();
+            MainLoop();
+        }, timeout);
     }
 })();
