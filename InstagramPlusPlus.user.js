@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.4.1
+// @version      3.4.2
 // @description  Instagram++ Help Tools
 // @author       Maxhyt
 // @homepage     https://ducng99.github.io/InstagramPP
@@ -28,18 +28,18 @@
 
             if (typeof stPicLink !== "undefined")
             {
-                storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" href=\"" + $(stPicLink).attr("srcset").split("750w,")[1].split(" 1080w")[0] + "\" download target=\"_blank\">Download</a>";
+                storyMenu.innerHTML += "<button class=\"aOOlW HoLwm\" onclick=\"window.open('" + $(stPicLink).attr("srcset").split("750w,")[1].split(" 1080w")[0] + "', '_blank')\">Download</button>";
             }
             else if (typeof stVidLink !== "undefined")
             {
-                storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" href=\"" + $($(stVidLink).find("source")[0]).attr("src") + "\" download target=\"_blank\">Download</a>";
+                storyMenu.innerHTML += "<button class=\"aOOlW HoLwm\" onclick=\"window.open('" + $($(stVidLink).find("source")[0]).attr("src") + "', '_blank')\">Download</button>";
             }
             else
             {
-                storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" onclick=\"alert('Error: Could not get link');\">Download</a>";
+                storyMenu.innerHTML += "<button class=\"aOOlW HoLwm\" onclick=\"alert('Error: Could not get link');\">Download</button>";
             }
 
-            storyMenu.innerHTML += "<a class=\"aOOlW HoLwm\" target=\"_blank\" href=\"https://maxhyt.github.io/InstagramPlusPlus\">IG++ Guide</a>";
+            storyMenu.innerHTML += "<button class=\"aOOlW HoLwm\" onclick=\"window.open('https://maxhyt.github.io/InstagramPlusPlus')\">IG++</button>";
         }
         //News Feed
         let articles = $("article.M9sTE.L_LMM");
@@ -82,6 +82,11 @@
                 else if (typeof vidLink !== "undefined")
                 {
                     src = vidLink.src;
+                }
+                
+                if (typeof src === "undefined")
+                {
+                    return;
                 }
 
                 let arrowArticleLeft = $(".coreSpriteLeftPaginationArrow")[0];
