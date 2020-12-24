@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.5.0
+// @version      3.5.1
 // @description  Instagram++ Help Tools
 // @author       Maxhyt
 // @homepage     https://ducng99.github.io/InstagramPP
@@ -26,19 +26,19 @@
             {
                 let newNode = document.createElement("div");
                 newNode.innerHTML = "<button class=\"aOOlW HoLwm\" onclick=\"window.open('" + stPicLink.getAttribute("srcset").split(" 1080w")[0] + "', '_blank')\">Download</button>"
-                storyMenu.appendChild(newNode);
+                storyMenu.appendChild(newNode.firstChild);
             }
             else if (stVidLink !== null)
             {
                 let newNode = document.createElement("div");
                 newNode.innerHTML = "<button class=\"aOOlW HoLwm\" onclick=\"window.open('" + stVidLink.querySelector("source").getAttribute("src") + "', '_blank')\">Download</button>";
-                storyMenu.appendChild(newNode);
+                storyMenu.appendChild(newNode.firstChild);
             }
             else
             {
                 let newNode = document.createElement("div");
                 newNode.innerHTML = "<button class=\"aOOlW HoLwm\" onclick=\"alert('Error: Could not get link');\">Download</button>";
-                storyMenu.appendChild(newNode);
+                storyMenu.appendChild(newNode.firstChild);
             }
         }
         
@@ -120,7 +120,7 @@
                 }
                 let newNode = document.createElement("div");
                 newNode.innerHTML = '<span class="igpp_download"><a class="wpO6b" href="' + src + '" target="_blank"><div class="QBdPU"><svg class="_8-yf5" width="24" height="24" viewBox="0 0 16 16" fill="#262626" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></div></a></span>';
-                feedMenu.appendChild(newNode);
+                feedMenu.appendChild(newNode.firstChild);
             }
         });
     }
