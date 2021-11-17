@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.5.1
+// @version      3.5.2
 // @description  Instagram++ Help Tools
 // @author       Maxhyt
 // @homepage     https://ducng99.github.io/InstagramPP
@@ -65,13 +65,16 @@
                     let index = Array.from(picCount.children).indexOf(current);
                     let listPics = article.querySelectorAll("li.Ckrof");
 
-                    if (index != picCount.children.length - 1)
-                    {
-                        picLink = listPics[listPics.length - 2].querySelector(".FFVAD");
-                    }
-                    else
+                    if (index === picCount.children.length - 1)
                     {
                         picLink = listPics[listPics.length - 1].querySelector(".FFVAD");
+                    }
+                    else if (listPics.length === 4 && index > 0 && index % 2 !== 0)
+                    {
+                        picLink = listPics[listPics.length - 3].querySelector(".FFVAD");
+                    }
+                    else {
+                        picLink = listPics[listPics.length - 2].querySelector(".FFVAD");
                     }
                 }
                 else
