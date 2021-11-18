@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.5.2
+// @version      3.5.3
 // @description  Instagram++ Help Tools
 // @author       Maxhyt
 // @homepage     https://ducng99.github.io/InstagramPP
@@ -84,16 +84,23 @@
 
                 let vidLink = article.querySelector(".tWeCl");
 
-                if (picLink !== null)
+                if (picLink)
                 {
-                    src = picLink.getAttribute("srcset").split("750w,")[1].split(" 1080w")[0];
+                    if (picLink.getAttribute("srcset"))
+                    {
+                        src = getPicLink(picLink.getAttribute("srcset"));
+                    }
+                    else
+                    {
+                        src = picLink.src;
+                    }
                 }
-                else if (vidLink !== null)
+                else if (vidLink)
                 {
                     src = vidLink.src;
                 }
                 
-                if (src === null)
+                if (!src)
                 {
                     return;
                 }
@@ -134,5 +141,20 @@
             article.querySelector(".igpp_download").remove();
             MainLoop();
         }, timeout);
+    }
+    
+    function getPicLink(links)
+    {
+        let linksArray = links.split(',');
+        let linksObjs = [];
+        
+        linksArray.forEach(link => {
+            let tmp = link.split(' ');
+            linksObjs.push({ url: tmp[0], res: parseInt(tmp[1].substring(0, tmp[1].length - 1)) });
+        });
+        
+        linksObjs.sort((a, b) => b.res - a.res);
+        
+        return linksObjs[0].url;
     }
 })();
