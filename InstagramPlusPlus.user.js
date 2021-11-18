@@ -8,7 +8,6 @@
 // @homepage     https://ducng99.github.io/InstagramPP
 // @homepageURL  https://ducng99.github.io/InstagramPP
 // @match        https://www.instagram.com/*
-// @updateURL    https://ducng99.github.io/InstagramPP/InstagramPlusPlus.meta.js
 // @downloadURL  https://ducng99.github.io/InstagramPP/InstagramPlusPlus.user.js
 // ==/UserScript==
 
