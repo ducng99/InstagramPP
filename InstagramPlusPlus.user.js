@@ -1,15 +1,13 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.6.0
-// @description  Instagram++ Help Tools
+// @version      3.6.1
+// @description  Add addtional features to Instagram
 // @author       Maxhyt
+// @license      GPL-3.0
 // @icon         https://icons.duckduckgo.com/ip2/instagram.com.ico
 // @homepage     https://ducng99.github.io/InstagramPP
-// @homepageURL  https://ducng99.github.io/InstagramPP
 // @match        https://www.instagram.com/*
-// @updateURL    https://ducng99.github.io/InstagramPP/InstagramPlusPlus.meta.js
-// @downloadURL  https://ducng99.github.io/InstagramPP/InstagramPlusPlus.user.js
 // @run-at       document-start
 // ==/UserScript==
 
@@ -168,8 +166,7 @@
                     }
                 });
             }
-            else {
-                console.log(event.target.responseURL);
+            else if (event.target.responseURL.includes("https://www.instagram.com/graphql/query/")){
                 let src = response?.data?.shortcode_media?.video_url;
                 let postID = response?.data?.shortcode_media?.shortcode;
                 if (src && postID) {
@@ -180,4 +177,23 @@
         // Call the stored reference to the native method
         XHR_open.apply(this, arguments);
     };
+    
+    window.addEventListener('load', () => {
+        const AllScripts = document.querySelectorAll('script');
+        AllScripts.forEach(script => {
+            if (script.innerHTML.startsWith("window.__additionalDataLoaded")) {
+                let matches = /window\.__additionalDataLoaded\('.*',(.*)\);/.exec(script.innerHTML);
+                if (matches[1]) {
+                    let response = JSON.parse(matches[1])?.graphql;
+                    if (response) {
+                        let postID = response.shortcode_media.shortcode;
+                        let src = response.shortcode_media.video_url;
+                        if (src && postID) {
+                            CapturedVideoURLs.push({ postID, src });
+                        }
+                    }
+                }
+            }
+        });
+    });
 })();
