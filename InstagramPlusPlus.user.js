@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.7.0
+// @version      3.7.1
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      GPL-3.0
@@ -13,7 +13,7 @@
 
 (function () {
     let CapturedMediaURLs = [];
-    
+
     setInterval(MainLoop, 2000);
 
     function MainLoop() {
@@ -81,11 +81,11 @@
             feedMenu.appendChild(newNode.firstChild);
         }
     }
-    
+
     function GetMediaSrc(article, mediaCountDOM) {
         let mediaIndex = -1;
         let src = '';
-        
+
         if (mediaCountDOM && mediaCountDOM.children.length > 1) {
             let current = mediaCountDOM.querySelector(".Yi5aA.XCodT");
             mediaIndex = [...mediaCountDOM.children].indexOf(current);
@@ -116,7 +116,7 @@
                 }
             }
         }
-        
+
         return src;
     }
 
@@ -126,76 +126,107 @@
             MainLoop();
         }, timeout);
     }
-    
-    let XHR_open = XMLHttpRequest.prototype.open;
+
+    const XHR_open = XMLHttpRequest.prototype.open;
 
     // Overwrite the native method
-    XMLHttpRequest.prototype.open = function() {
-        // Assign an event listener
-        this.addEventListener("load", event => {
-            let response = JSON.parse(event.target.responseText);
-            
-            if (event.target.responseURL === "https://i.instagram.com/api/v1/feed/timeline/") {
-                response.feed_items.forEach(item => {
-                    let postID = item.code;
-                    if (item.video_versions) {
-                        let src = item.video_versions[item.video_versions.length - 1].url;
-                        CapturedMediaURLs.push({ postID, src });
-                    }
-                });
-            }
-            else if (event.target.responseURL.includes("https://www.instagram.com/graphql/query/")){
-                const media = response.data.shortcode_media;
-                if (media) {
-                    ProcessMediaObj(media);
+    XMLHttpRequest.prototype.open = function () {
+        if (!arguments[1].includes("/stories/reel/seen")) {
+            // Assign an event listener
+            this.addEventListener("load", event => {
+                let response = JSON.parse(event.target.responseText);
+
+                if (event.target.responseURL === "https://i.instagram.com/api/v1/feed/timeline/") {
+                    response.feed_items.forEach(item => {
+                        ParseMediaObjFromAPI(item.media_or_ad);
+                    });
                 }
-            }
-        }, false);
-        // Call the stored reference to the native method
-        XHR_open.apply(this, arguments);
+                else if (event.target.responseURL.includes("https://www.instagram.com/graphql/query/")) {
+                    const media = response.data.shortcode_media;
+                    if (media) {
+                        ProcessMediaObjFromGraphQL(media);
+                    }
+                }
+            }, false);
+            // Call the stored reference to the native method
+            XHR_open.apply(this, arguments);
+        }
     };
-    
+
     window.addEventListener('load', () => {
         const AllScripts = document.querySelectorAll('script');
         AllScripts.forEach(script => {
             if (script.innerHTML.startsWith("window.__additionalDataLoaded")) {
                 let matches = /window\.__additionalDataLoaded\('.*',(.*)\);/.exec(script.innerHTML);
                 if (matches[1]) {
-                    let media = JSON.parse(matches[1])?.graphql.shortcode_media;
-                    if (media) {
-                        ProcessMediaObj(media);
+                    if (matches[1].includes("graphql")) {
+                        let media = JSON.parse(matches[1])?.graphql?.shortcode_media;
+                        if (media) {
+                            ProcessMediaObjFromGraphQL(media);
+                        }
+                    }
+                    else if (matches[1].includes("feed_items")) {
+                        let feed_items = JSON.parse(matches[1])?.feed_items;
+                        feed_items.forEach(item => {
+                            ParseMediaObjFromAPI(item.media_or_ad);
+                        });
                     }
                 }
             }
         });
     });
-    
-    function ProcessMediaObj(media) {
+
+    function ProcessMediaObjFromGraphQL(media, save = true) {
         const postID = media.shortcode;
-        
+
         if (media.__typename === "GraphSidecar") {
             let links = [];
-            
+
             media.edge_sidecar_to_children.edges.forEach(edge => {
-                let link = ProcessMediaObj(edge.node);
+                let link = ProcessMediaObjFromGraphQL(edge.node, false);
                 links.push(link.src);
             });
-            
+
             CapturedMediaURLs.push({ postID, srcs: links });
         }
         else if (media.is_video) {
             let src = media.video_url;
             if (src) {
-                CapturedMediaURLs.push({ postID, src });
+                if (save) CapturedMediaURLs.push({ postID, src });
                 return { postID, src };
             }
         }
         else {
             let src = media.display_resources[media.display_resources.length - 1]?.src;
             if (src) {
-                CapturedMediaURLs.push({ postID, src });
+                if (save) CapturedMediaURLs.push({ postID, src });
                 return { postID, src };
             }
+        }
+    }
+
+    function ParseMediaObjFromAPI(item, save = true) {
+        const postID = item.code;
+        
+        if (item.carousel_media) {
+            let links = [];
+
+            item.carousel_media.forEach(media => {
+                let link = ParseMediaObjFromAPI(media, false);
+                links.push(link.src);
+            });
+
+            CapturedMediaURLs.push({ postID, srcs: links });
+        }
+        else if (item.video_versions) {
+            let src = item.video_versions[item.video_versions.length - 1].url;
+            if (save) CapturedMediaURLs.push({ postID, src });
+            return { postID, src };
+        }
+        else if (item.image_versions2) {
+            let src = item.image_versions2.candidates[0].url;
+            if (save) CapturedMediaURLs.push({ postID, src });
+            return { postID, src };
         }
     }
 })();
