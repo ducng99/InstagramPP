@@ -1,17 +1,21 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.5.4
+// @version      3.6.0
 // @description  Instagram++ Help Tools
 // @author       Maxhyt
 // @icon         https://icons.duckduckgo.com/ip2/instagram.com.ico
 // @homepage     https://ducng99.github.io/InstagramPP
 // @homepageURL  https://ducng99.github.io/InstagramPP
 // @match        https://www.instagram.com/*
+// @updateURL    https://ducng99.github.io/InstagramPP/InstagramPlusPlus.meta.js
 // @downloadURL  https://ducng99.github.io/InstagramPP/InstagramPlusPlus.user.js
+// @run-at       document-start
 // ==/UserScript==
 
 (function () {
+    let CapturedVideoURLs = [];
+    
     setInterval(MainLoop, 2000);
 
     function MainLoop() {
@@ -52,7 +56,7 @@
             let picLink = null;
 
             let picCount = article.querySelector("div._3eoV-.IjCL9");
-            if (picCount !== null && picCount.children.length > 0) {
+            if (picCount && picCount.children.length > 1) {
                 let current = picCount.querySelector(".Yi5aA.XCodT");
                 let index = Array.from(picCount.children).indexOf(current);
                 let listPics = article.querySelectorAll("li.Ckrof");
@@ -83,9 +87,21 @@
             }
             else if (vidLink) {
                 src = vidLink.src;
+                if (src.startsWith("blob:")) {
+                    src = "";
+                    let dateDOM = article.querySelector(".NnvRN > a");
+                    if (dateDOM) {
+                        for (const links of CapturedVideoURLs) {
+                            if (dateDOM.href.includes(links.postID)) {
+                                src = links.src;
+                            }
+                        }
+                    }
+                }
             }
 
             if (!src) {
+                console.error("No link found for", article);
                 return;
             }
 
@@ -134,4 +150,34 @@
 
         return linksObjs[0].url;
     }
+    
+    let XHR_open = XMLHttpRequest.prototype.open;
+
+    // Overwrite the native method
+    XMLHttpRequest.prototype.open = function() {
+        // Assign an event listener
+        this.addEventListener("load", event => {
+            let response = JSON.parse(event.target.responseText);
+            
+            if (event.target.responseURL === "https://i.instagram.com/api/v1/feed/timeline/") {
+                response.feed_items.forEach(item => {
+                    let postID = item.code;
+                    if (item.video_versions) {
+                        let src = item.video_versions[item.video_versions.length - 1].url;
+                        CapturedVideoURLs.push({ postID, src });
+                    }
+                });
+            }
+            else {
+                console.log(event.target.responseURL);
+                let src = response?.data?.shortcode_media?.video_url;
+                let postID = response?.data?.shortcode_media?.shortcode;
+                if (src && postID) {
+                    CapturedVideoURLs.push({ postID, src });
+                }
+            }
+        }, false);
+        // Call the stored reference to the native method
+        XHR_open.apply(this, arguments);
+    };
 })();
