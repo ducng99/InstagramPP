@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.7.1
+// @version      3.8.0
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      GPL-3.0
 // @icon         https://icons.duckduckgo.com/ip2/instagram.com.ico
-// @homepage     https://ducng99.github.io/InstagramPP
+// @homepage     https://github.com/ducng99/InstagramPP
 // @match        https://www.instagram.com/*
 // @run-at       document-start
 // ==/UserScript==
@@ -17,39 +17,42 @@
     setInterval(MainLoop, 2000);
 
     function MainLoop() {
-        //Story
-        let storyMenu = document.querySelector(".mt3GC");
-        if (storyMenu !== null && storyMenu.innerHTML.indexOf("Download") === -1 && window.location.href.indexOf("stories") !== -1) {
-            let stPicLink = document.querySelector(".y-yJ5.i1HvM");
-            let stVidLink = document.querySelector(".y-yJ5.OFkrO");
-
-            if (stPicLink !== null) {
-                let newNode = document.createElement("div");
-                newNode.innerHTML = "<button class=\"aOOlW HoLwm\" onclick=\"window.open('" + stPicLink.getAttribute("srcset").split(" 1080w")[0] + "', '_blank')\">Download</button>"
-                storyMenu.appendChild(newNode.firstChild);
-            }
-            else if (stVidLink !== null) {
-                let newNode = document.createElement("div");
-                newNode.innerHTML = "<button class=\"aOOlW HoLwm\" onclick=\"window.open('" + stVidLink.querySelector("source").getAttribute("src") + "', '_blank')\">Download</button>";
-                storyMenu.appendChild(newNode.firstChild);
-            }
-            else {
-                let newNode = document.createElement("div");
-                newNode.innerHTML = "<button class=\"aOOlW HoLwm\" onclick=\"alert('Error: Could not get link');\">Download</button>";
-                storyMenu.appendChild(newNode.firstChild);
-            }
+        //Story        
+        let storyMenu = document.querySelector("._8p8kF");
+        if (storyMenu !== null && !storyMenu.querySelector('.igpp_download')) {
+            const newNode = document.createElement('div');
+            newNode.innerHTML = `<button class="wpO6b igpp_download" type="button"><div class="QBdPU"><svg width="16" height="16" fill="#ffffff" color="#ffffff" class="_8-yf5" viewBox="0 0 16 16"><path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708z"/></svg></div></button>`;
+            const downloadButton = newNode.firstChild;
+            downloadButton.addEventListener('click', DownloadStory);
+            storyMenu.insertBefore(downloadButton, storyMenu.firstChild);
         }
 
         //News Feed
-        let articles = Array.from(document.body.querySelectorAll("article.M9sTE.L_LMM"));
+        let articles = [...document.body.querySelectorAll("article.M9sTE.L_LMM")];
         let promises = articles.map(ProcessArticle);
         Promise.all(promises);
+    }
+    
+    function DownloadStory() {
+        let stPicLink = document.body.querySelector("img.y-yJ5")?.getAttribute("srcset")?.split(" ")[0];
+        let stVidLink = document.body.querySelector("video.y-yJ5.OFkrO")?.querySelector("source")?.getAttribute("src");
+        let downloadDOM = document.createElement('a');
+
+        if (stVidLink) {
+            window.open(stVidLink, '_blank');
+        }
+        else if (stPicLink) {
+            window.open(stPicLink, '_blank');
+        }
+        else {
+            alert('Error: Cannot Find the link');
+        }
     }
 
     async function ProcessArticle(article) {
         let feedMenu = article.querySelector(".ltpMr.Slqrh");
 
-        if (feedMenu.innerHTML.indexOf("Download") === -1) {
+        if (!feedMenu.querySelector('.igpp_download')) {
             const mediaCount = article.querySelector("div._3eoV-.IjCL9");
             const src = GetMediaSrc(article, mediaCount);
 
@@ -76,6 +79,7 @@
             if (arrowSwitchRight !== null) {
                 arrowSwitchRight.addEventListener('click', () => { ResetDownloadLink(article, 100); });
             }
+            
             let newNode = document.createElement("div");
             newNode.innerHTML = '<span class="igpp_download"><a class="wpO6b" href="' + src + '" target="_blank"><div class="QBdPU"><svg class="_8-yf5" width="24" height="24" viewBox="0 0 16 16" fill="#262626" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></div></a></span>';
             feedMenu.appendChild(newNode.firstChild);
@@ -89,18 +93,6 @@
         if (mediaCountDOM && mediaCountDOM.children.length > 1) {
             let current = mediaCountDOM.querySelector(".Yi5aA.XCodT");
             mediaIndex = [...mediaCountDOM.children].indexOf(current);
-            let listMedias = article.querySelectorAll("li.Ckrof");
-            let currentMediaDOM;
-
-            if (mediaIndex === mediaCountDOM.children.length - 1) {
-                currentMediaDOM = listMedias[listMedias.length - 1];
-            }
-            else if (listMedias.length === 4 && mediaIndex > 0 && mediaIndex % 2 !== 0) {
-                currentMediaDOM = listMedias[listMedias.length - 3];
-            }
-            else {
-                currentMediaDOM = listMedias[listMedias.length - 2];
-            }
         }
 
         let dateDOM = article.querySelector(".NnvRN > a");
