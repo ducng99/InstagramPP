@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.8.1
+// @version      3.8.3
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
-// @license      GPL-3.0
+// @license      AGPL-3.0
 // @icon         https://icons.duckduckgo.com/ip2/instagram.com.ico
 // @homepage     https://github.com/ducng99/InstagramPP
 // @match        https://www.instagram.com/*
@@ -17,7 +17,7 @@
     setInterval(MainLoop, 2000);
 
     function MainLoop() {
-        //Story        
+        // Story        
         let storyMenu = document.querySelector("._8p8kF");
         if (storyMenu && !storyMenu.querySelector('.igpp_download')) {
             const newNode = document.createElement('div');
@@ -27,10 +27,16 @@
             storyMenu.insertBefore(downloadButton, storyMenu.firstChild);
         }
 
-        //News Feed
+        // News Feed
         let articles = [...document.body.querySelectorAll("article.M9sTE.L_LMM")];
-        let promises = articles.map(ProcessArticle);
-        Promise.all(promises);
+        Promise.all(articles.map(ProcessArticle));
+        
+        // Video
+        [...document.body.querySelectorAll('video.tWeCl')].forEach(video => {
+            if (video && video.volume == 1) {
+                video.volume = 0.5;
+            }
+        });
     }
     
     function DownloadStory() {
@@ -56,13 +62,15 @@
 
             if (src) {
                 let arrowSwitchLeft = article.querySelector('.coreSpriteLeftChevron');
-                if (arrowSwitchLeft) {
+                if (arrowSwitchLeft && !arrowSwitchLeft.classList.contains('igpp_checked')) {
                     arrowSwitchLeft.addEventListener('click', () => { ResetDownloadLink(article, 100); });
+                    arrowSwitchLeft.classList.add('igpp_checked');
                 }
 
                 let arrowSwitchRight = article.querySelector('.coreSpriteRightChevron');
-                if (arrowSwitchRight) {
+                if (arrowSwitchRight && !arrowSwitchRight.classList.contains('igpp_checked')) {
                     arrowSwitchRight.addEventListener('click', () => { ResetDownloadLink(article, 100); });
+                    arrowSwitchRight.classList.add('igpp_checked');
                 }
 
                 let newNode = document.createElement("div");
