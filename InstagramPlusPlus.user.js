@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.8.6
+// @version      3.8.7
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -150,6 +150,11 @@
                             section.layout_content.fill_items.forEach(item => ParseMediaObjFromAPI(item.media));
                         }
                     });
+                }
+                else if (event.target.responseURL.includes("https://i.instagram.com/api/v1/media/")) {
+                    if (response.items[0]) {
+                        ParseMediaObjFromAPI(response.items[0]);
+                    }
                 }
             }, false);
             // Call the stored reference to the native method
