@@ -3,7 +3,7 @@ A "powerful" tool provides enhanced features to Instagram web version<br/><br/>
 
 **Features:**<br/>
 - Download stories<br/>
-- Download pictures and videos from news feed and in profiles<br/><br/>
+- Download pictures and videos from everywhere (I hope)<br/><br/>
 
 **Installation:**<br/>
 1. Install [Tampermonkey](https://www.tampermonkey.net/)<br/>
