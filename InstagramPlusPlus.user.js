@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.8.5
+// @version      3.8.6
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -132,6 +132,24 @@
                     if (media) {
                         media.forEach(edge => ParseMediaObjFromGraphQL(edge.node));
                     }
+                }
+                else if (event.target.responseURL.includes("https://www.instagram.com/explore/grid/")) {
+                    let sections = response.sectional_items;
+                    
+                    sections.forEach(section => {
+                        if (section.layout_type === "media_grid") {
+                            section.layout_content.medias.forEach(media => ParseMediaObjFromAPI(media.media));
+                        }
+                        else if (section.layout_type.startsWith('two_by_two')) {
+                            if (section.layout_content.two_by_two_item.channel) {
+                                ParseMediaObjFromAPI(section.layout_content.two_by_two_item.channel.media);
+                            }
+                            else {
+                                ParseMediaObjFromAPI(section.layout_content.two_by_two_item.media);
+                            }
+                            section.layout_content.fill_items.forEach(item => ParseMediaObjFromAPI(item.media));
+                        }
+                    });
                 }
             }, false);
             // Call the stored reference to the native method
