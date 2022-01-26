@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.8.4
+// @version      3.8.5
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -128,9 +128,9 @@
                     });
                 }
                 else if (event.target.responseURL.includes("https://www.instagram.com/graphql/query/")) {
-                    const media = response.data.shortcode_media;
+                    const media = response.data.user?.edge_owner_to_timeline_media.edges;
                     if (media) {
-                        ParseMediaObjFromGraphQL(media);
+                        media.forEach(edge => ParseMediaObjFromGraphQL(edge.node));
                     }
                 }
             }, false);
@@ -145,17 +145,17 @@
             if (script.innerHTML.startsWith("window.__additionalDataLoaded")) {
                 let matches = /window\.__additionalDataLoaded\('.*',(.*)\);/.exec(script.innerHTML);
                 if (matches[1]) {
-                    if (matches[1].includes("graphql")) {
-                        let media = JSON.parse(matches[1])?.graphql?.shortcode_media;
+                    if (matches[1].startsWith('{"items":')) {
+                        let media = JSON.parse(matches[1])?.items;
                         if (media) {
-                            ParseMediaObjFromGraphQL(media);
+                            media.forEach(item => ParseMediaObjFromAPI(item));
                         }
                     }
                     else if (matches[1].includes("feed_items")) {
                         let feed_items = JSON.parse(matches[1])?.feed_items;
-                        feed_items.forEach(item => {
-                            ParseMediaObjFromAPI(item.media_or_ad);
-                        });
+                        if (feed_items) {
+                            feed_items.forEach(item => ParseMediaObjFromAPI(item.media_or_ad));
+                        }
                     }
                 }
             }
@@ -182,7 +182,7 @@
                 return { postID, src };
             }
         }
-        else {
+        else if (media.__typename === "GraphImage") {
             let src = media.display_resources[media.display_resources.length - 1]?.src;
             if (src) {
                 if (save) CapturedMediaURLs.push({ postID, src });
