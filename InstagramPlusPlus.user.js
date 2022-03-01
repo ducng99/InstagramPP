@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      3.8.7
+// @version      3.8.8
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -89,7 +89,7 @@
             mediaIndex = [...mediaCountDOM.children].indexOf(current);
         }
 
-        const dateDOM = article.querySelector(".NnvRN > a");
+        const dateDOM = article.querySelector("a.c-Yi7");
         if (dateDOM) {
             for (const links of CapturedMediaURLs) {
                 if (dateDOM.href.includes(links.postID)) {
@@ -152,7 +152,7 @@
                     });
                 }
                 else if (event.target.responseURL.includes("https://i.instagram.com/api/v1/media/")) {
-                    if (response.items[0]) {
+                    if (response.items && response.items[0]) {
                         ParseMediaObjFromAPI(response.items[0]);
                     }
                 }
