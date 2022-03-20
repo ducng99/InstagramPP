@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.0.0
+// @version      4.0.1
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -102,13 +102,14 @@
             
             list_comments.forEach(comment_container => {
                 if (!comment_container.hasAttribute("igpp_checked")) {
-                    comment_container.setAttribute("igpp_checked", "");
 
-                    const commentText = comment_container.querySelector('.MOdxS').textContent;
+                    const commentText = comment_container.querySelector('ul.MOdxS > span').textContent;
                     const timeLink = comment_container.querySelector('a.gU-I7');
-                    const match = /\/p\/[a-z0-9]+\/c\/(\d+)/i.exec(timeLink.href);
+                    const match = /\/p\/[a-z0-9-]+\/c\/(\d+)/i.exec(timeLink.href);
 
                     if (timeLink && match) {
+                        comment_container.setAttribute("igpp_checked", "");
+                        
                         if (GetReportedComments().indexOf(match[1]) === -1) {
                             toBeCheckedComments[match[1]] = commentText;
                             IDsToElement[match[1]] = comment_container;
