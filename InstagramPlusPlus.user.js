@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.0.2
+// @version      4.0.3
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -14,7 +14,6 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
-// @grant        GM_openInTab
 // @grant        unsafeWindow
 // ==/UserScript==
 
@@ -118,15 +117,13 @@
                 }
             });
             
-            const checkedCommentsResult = Object.entries(await CheckSpamComments(toBeCheckedComments));
+            const checkedCommentsResult = await CheckSpamComments(toBeCheckedComments);
             
-            checkedCommentsResult.forEach(comment => {
-                if (comment[1]) {
-                    if (IDsToElement[comment[0]]) {
-                        IDsToElement[comment[0]].remove();
+            checkedCommentsResult.forEach(id => {
+                    if (IDsToElement[id]) {
+                        IDsToElement[id].remove();
                     }
-                    AddReportCommentID(comment[0]);
-                }
+                    AddReportCommentID(id);
             });
         }
     }
@@ -321,7 +318,7 @@
             return await res.json();
         }
         
-        return {};
+        return [];
     }
     
     async function SendReport(comment_id) {
