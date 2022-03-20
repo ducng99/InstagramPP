@@ -5,6 +5,8 @@ A "powerful" tool provides enhanced features to Instagram web version<br/><br/>
 - Download stories
 - Download pictures and videos from everywhere (I hope)
 - Block 'seen' stories (watch stories in private)
+- Auto report spam comments
+- Hide spam comments
 
 ## Installation:
 1. Install [Tampermonkey](https://www.tampermonkey.net/)
