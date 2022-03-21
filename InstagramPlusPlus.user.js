@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.0.4
+// @version      4.0.5
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -45,7 +45,7 @@
 
             // News Feed
             let articles = [...document.body.querySelectorAll("article.M9sTE.L_LMM")];
-            Promise.all(articles.map(ProcessArticle));
+            await Promise.all(articles.map(ProcessArticle));
 
             // Video
             [...document.body.querySelectorAll('video.tWeCl:not([igpp_checked])')].forEach(video => {
@@ -107,7 +107,7 @@
             list_comments.forEach(comment_container => {
                 const commentText = comment_container.querySelector('.MOdxS > span')?.textContent;
                 const timeLink = comment_container.querySelector('a.gU-I7');
-                const match = /\/p\/[a-z0-9-]+\/c\/(\d+)/i.exec(timeLink.href);
+                const match = /\/p\/[a-z0-9-_]+\/c\/(\d+)/i.exec(timeLink.href);
 
                 if (commentText && timeLink && match) {
                     comment_container.setAttribute("igpp_checked", "");
@@ -410,7 +410,7 @@
         }
         
         if (GM_getValue(STORAGE_VARS.AutoReportSpamComments, null) === null) {
-            GM_setValue(STORAGE_VARS.AutoReportSpamComments, false);
+            GM_setValue(STORAGE_VARS.AutoReportSpamComments, true);
         }
         
         // Setup settings page
