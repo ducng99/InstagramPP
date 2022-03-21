@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.0.3
+// @version      4.0.4
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
 // @icon         https://icons.duckduckgo.com/ip2/instagram.com.ico
 // @homepage     https://github.com/ducng99/InstagramPP
 // @match        https://www.instagram.com/*
-// @match        https://beta.ducng.dev/InstagramPP/
+// @match        https://static.ducng.dev/InstagramPP/
 // @require      https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js
 // @run-at       document-start
 // @grant        GM_setValue
@@ -24,34 +24,39 @@
                           ReportedComments: "reported_comments", CheckedComments: "checked_comments" };
     let CapturedMediaURLs = [];
     let ReportCommentsQueue = [];
-    const SETTINGS_PAGE = "https://beta.ducng.dev/InstagramPP/";
+    const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
     
     LoadSettings();
 
-    setInterval(MainLoop, 2000);
+    MainLoop();
     ReportLoop();
 
-    function MainLoop() {
-        // Story
-        let storyMenu = document.querySelector("._8p8kF");
-        if (storyMenu && !storyMenu.querySelector('.igpp_download')) {
-            const newNode = document.createElement('div');
-            newNode.innerHTML = '<button class="wpO6b igpp_download" type="button"><div class="QBdPU"><svg width="18" height="18" fill="#ffffff" color="#ffffff" class="_8-yf5" viewBox="0 0 16 16"><path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708z"/></svg></div></button>';
-            const downloadButton = newNode.firstChild;
-            downloadButton.addEventListener('click', DownloadStory);
-            storyMenu.insertBefore(downloadButton, storyMenu.firstChild);
-        }
-
-        // News Feed
-        let articles = [...document.body.querySelectorAll("article.M9sTE.L_LMM")];
-        Promise.all(articles.map(ProcessArticle));
-        
-        // Video
-        [...document.body.querySelectorAll('video.tWeCl')].forEach(video => {
-            if (video && video.volume == 1) {
-                video.volume = 0.5;
+    async function MainLoop() {
+        while (true) {
+            // Story
+            let storyMenu = document.querySelector("._8p8kF");
+            if (storyMenu && !storyMenu.querySelector('.igpp_download')) {
+                const newNode = document.createElement('div');
+                newNode.innerHTML = '<button class="wpO6b igpp_download" type="button"><div class="QBdPU"><svg width="18" height="18" fill="#ffffff" color="#ffffff" class="_8-yf5" viewBox="0 0 16 16"><path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708z"/></svg></div></button>';
+                const downloadButton = newNode.firstChild;
+                downloadButton.addEventListener('click', DownloadStory);
+                storyMenu.insertBefore(downloadButton, storyMenu.firstChild);
             }
-        });
+
+            // News Feed
+            let articles = [...document.body.querySelectorAll("article.M9sTE.L_LMM")];
+            Promise.all(articles.map(ProcessArticle));
+
+            // Video
+            [...document.body.querySelectorAll('video.tWeCl:not([igpp_checked])')].forEach(video => {
+                if (video) {
+                    video.setAttribute("igpp_checked", "");
+                    video.volume = 0.5;
+                }
+            });
+            
+            await Sleep(2000);
+        }
     }
     
     function DownloadStory() {
