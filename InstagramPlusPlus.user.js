@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.0.5
+// @version      4.1.0
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -43,10 +43,6 @@
                 storyMenu.insertBefore(downloadButton, storyMenu.firstChild);
             }
 
-            // News Feed
-            let articles = [...document.body.querySelectorAll("article.M9sTE.L_LMM")];
-            await Promise.all(articles.map(ProcessArticle));
-
             // Video
             [...document.body.querySelectorAll('video.tWeCl:not([igpp_checked])')].forEach(video => {
                 if (video) {
@@ -54,6 +50,17 @@
                     video.volume = 0.5;
                 }
             });
+            
+            // Profile pic
+            let profilePicContainer = document.body.querySelector('.eC4Dz:not([igpp_checked])');
+            if (profilePicContainer) {
+                await ProcessProfilePic(profilePicContainer);
+                profilePicContainer.setAttribute("igpp_checked", "");
+            }
+
+            // News Feed
+            let articles = [...document.body.querySelectorAll("article.M9sTE.L_LMM")];
+            await Promise.all(articles.map(ProcessArticle));
             
             await Sleep(2000);
         }
@@ -125,10 +132,10 @@
             const checkedCommentsResult = await CheckSpamComments(toBeCheckedComments);
             
             checkedCommentsResult.forEach(id => {
-                    if (IDsToElement[id]) {
-                        IDsToElement[id].remove();
-                    }
-                    AddReportCommentID(id);
+                if (IDsToElement[id]) {
+                    IDsToElement[id].remove();
+                }
+                AddReportCommentID(id);
             });
         }
     }
@@ -400,6 +407,48 @@
     
     /* END - REPORT SPAM SECTION */
     
+    /* START - DOWNLOAD PROFILE PIC SECTION */
+    async function ProcessProfilePic(container) {
+        const match = window.location.pathname.match(/^\/([a-z0-9._]+)/i);
+        if (match) {
+            const username = match[1];
+            
+            try {
+                let response = await fetch(`https://www.instagram.com/${username}/?__a=1`, {
+                    headers: {
+                        "X-IG-App-ID": 936619743392459
+                    }
+                });
+                response = await response.json();
+                
+                if (response?.graphql?.user?.id) {
+                    const userID = response.graphql.user.id;
+                    
+                    response = await fetch(`https://i.instagram.com/api/v1/users/${userID}/info/`, {
+                        headers: {
+                            "X-IG-App-ID": 936619743392459
+                        },
+                        credentials: 'include'
+                    });
+                    response = await response.json();
+                    
+                    if (response?.user?.hd_profile_pic_url_info?.url) {
+                        const profilePicURL = response.user.hd_profile_pic_url_info.url;
+                        
+                        const tmpDOM = document.createElement("div");
+                        tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em;"><button class="sqdOP L3NKy y3zKF">Download</button></a>`;
+                        container.appendChild(tmpDOM.firstChild);
+                    }
+                }
+            }
+            catch (ex) {
+                console.error("Failed to fetch profile pic for " + username, ex);
+            }
+        }
+    }
+    /* END - DOWNLOAD PROFILE PIC SECTION */
+    
+    /* START - SETTINGS SECTION */
     // Open settings page
     GM_registerMenuCommand("Settings", () => window.open(SETTINGS_PAGE, "_blank"));
     
@@ -426,6 +475,7 @@
             });
         }
     }
+    /* END - SETTINGS SECTION */
     
     function Sleep(time) {
         return new Promise(resolve => setTimeout(() => resolve(), time));
