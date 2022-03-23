@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.1.0
+// @version      4.1.1
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -322,12 +322,17 @@
     async function CheckSpamComments(comments) {
         if (Object.keys(comments).length > 0)
         {
-            const res = await fetch("https://4ze85p5fce.execute-api.ap-southeast-2.amazonaws.com/v1/IsInstagramCommentSpam", {
-                body: JSON.stringify(comments),
-                method: 'POST'
-            });
+            try {
+                const res = await fetch("https://gateway.aws.ducng.dev/IsInstagramCommentSpam", {
+                    body: JSON.stringify(comments),
+                    method: 'POST'
+                });
 
-            return await res.json();
+                return await res.json();
+            }
+            catch {
+                console.error("Failed to connect to check spam API");
+            }
         }
         
         return [];
