@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.1.1
+// @version      4.1.2
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -327,8 +327,9 @@
                     body: JSON.stringify(comments),
                     method: 'POST'
                 });
-
-                return await res.json();
+                
+                if (res.status === 200)
+                    return await res.json();
             }
             catch {
                 console.error("Failed to connect to check spam API");
