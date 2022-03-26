@@ -19,13 +19,15 @@
 
 (function () {
     "use strict"
-    
-    const STORAGE_VARS = { BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments",
-                          ReportedComments: "reported_comments", CheckedComments: "checked_comments" };
+
+    const STORAGE_VARS = {
+        BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments",
+        ReportedComments: "reported_comments", CheckedComments: "checked_comments"
+    };
     let CapturedMediaURLs = [];
     let ReportCommentsQueue = [];
     const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
-    
+
     LoadSettings();
 
     MainLoop();
@@ -50,7 +52,7 @@
                     video.volume = 0.5;
                 }
             });
-            
+
             // Profile pic
             let profilePicContainer = document.body.querySelector('.eC4Dz:not([igpp_checked])');
             if (profilePicContainer) {
@@ -61,11 +63,11 @@
             // News Feed
             let articles = [...document.body.querySelectorAll("article.M9sTE.L_LMM")];
             await Promise.all(articles.map(ProcessArticle));
-            
+
             await Sleep(2000);
         }
     }
-    
+
     function DownloadStory() {
         let stPicLink = document.body.querySelector("img.y-yJ5")?.getAttribute("srcset")?.split(" ")[0];
         let stVidLink = document.body.querySelector("video.y-yJ5.OFkrO")?.querySelector("source")?.getAttribute("src");
@@ -93,7 +95,7 @@
                 feedMenu.appendChild(newNode.firstChild);
             }
         }
-        
+
         let arrowSwitchLeft = article.querySelector('.coreSpriteLeftChevron:not([igpp_checked])');
         if (arrowSwitchLeft) {
             arrowSwitchLeft.addEventListener('click', () => { ResetDownloadLink(article, 100); });
@@ -105,7 +107,7 @@
             arrowSwitchRight.addEventListener('click', () => { ResetDownloadLink(article, 100); });
             arrowSwitchRight.setAttribute('igpp_checked', '');
         }
-        
+
         if (GM_getValue(STORAGE_VARS.AutoReportSpamComments)) {
             const list_comments = article.querySelectorAll('ul.XQXOT.pXf-y > ul.Mr508:not([igpp_checked])');
             const toBeCheckedComments = {};
@@ -128,9 +130,9 @@
                     }
                 }
             });
-            
+
             const checkedCommentsResult = await CheckSpamComments(toBeCheckedComments);
-            
+
             checkedCommentsResult.forEach(id => {
                 if (IDsToElement[id]) {
                     IDsToElement[id].remove();
@@ -278,7 +280,7 @@
 
     function ParseMediaObjFromAPI(item, save = true) {
         const postID = item.code;
-        
+
         if (item.carousel_media) {
             let links = [];
 
@@ -300,9 +302,9 @@
             return { postID, src };
         }
     }
-    
+
     /* START - REPORT SPAM SECTION */
-    
+
     async function ReportLoop() {
         while (GM_getValue(STORAGE_VARS.AutoReportSpamComments, false)) {
             const tmp_ReportCommentsQueue = [...ReportCommentsQueue];
@@ -314,20 +316,19 @@
                 }
                 await Sleep(2000);
             }
-            
+
             await Sleep(2000);
         }
     }
-    
+
     async function CheckSpamComments(comments) {
-        if (Object.keys(comments).length > 0)
-        {
+        if (Object.keys(comments).length > 0) {
             try {
                 const res = await fetch("https://gateway.aws.ducng.dev/IsInstagramCommentSpam", {
                     body: JSON.stringify(comments),
                     method: 'POST'
                 });
-                
+
                 if (res.status === 200)
                     return await res.json();
             }
@@ -335,10 +336,10 @@
                 console.error("Failed to connect to check spam API");
             }
         }
-        
+
         return [];
     }
-    
+
     async function SendReport(comment_id) {
         const requestForm = new FormData;
         requestForm.append("entry_point", "1");
@@ -347,7 +348,7 @@
         requestForm.append("object_id", comment_id);
         requestForm.append("container_module", "postPage");
         requestForm.append("frx_prompt_request_type", "1");
-        
+
         try {
             let res_report_request = await fetch("https://www.instagram.com/reports/web/get_frx_prompt/", {
                 body: new URLSearchParams(requestForm),
@@ -394,31 +395,31 @@
         catch (ex) {
             console.error("Failed send report", ex);
         }
-        
+
         return false;
     }
-    
+
     function AddReportCommentID(id) {
         ReportCommentsQueue = [...new Set([...ReportCommentsQueue, id])];
     }
-    
+
     function GetReportedComments() {
         return JSON.parse(GM_getValue(STORAGE_VARS.ReportedComments, "[]"));
     }
-    
+
     function AddReportedComment(id) {
         let storedIDs = GetReportedComments();
         GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify([...new Set([...storedIDs, id])]));
     }
-    
+
     /* END - REPORT SPAM SECTION */
-    
+
     /* START - DOWNLOAD PROFILE PIC SECTION */
     async function ProcessProfilePic(container) {
         const match = window.location.pathname.match(/^\/([a-z0-9._]+)/i);
         if (match) {
             const username = match[1];
-            
+
             try {
                 let response = await fetch(`https://www.instagram.com/${username}/?__a=1`, {
                     headers: {
@@ -426,10 +427,10 @@
                     }
                 });
                 response = await response.json();
-                
+
                 if (response?.graphql?.user?.id) {
                     const userID = response.graphql.user.id;
-                    
+
                     response = await fetch(`https://i.instagram.com/api/v1/users/${userID}/info/`, {
                         headers: {
                             "X-IG-App-ID": 936619743392459
@@ -437,10 +438,10 @@
                         credentials: 'include'
                     });
                     response = await response.json();
-                    
+
                     if (response?.user?.hd_profile_pic_url_info?.url) {
                         const profilePicURL = response.user.hd_profile_pic_url_info.url;
-                        
+
                         const tmpDOM = document.createElement("div");
                         tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em;"><button class="sqdOP L3NKy y3zKF">Download</button></a>`;
                         container.appendChild(tmpDOM.firstChild);
@@ -453,27 +454,27 @@
         }
     }
     /* END - DOWNLOAD PROFILE PIC SECTION */
-    
+
     /* START - SETTINGS SECTION */
     // Open settings page
     GM_registerMenuCommand("Settings", () => window.open(SETTINGS_PAGE, "_blank"));
-    
+
     function LoadSettings() {
         // Set default settings if not exists
         if (GM_getValue(STORAGE_VARS.BlockSeenStory, null) === null) {
             GM_setValue(STORAGE_VARS.BlockSeenStory, true);
         }
-        
+
         if (GM_getValue(STORAGE_VARS.AutoReportSpamComments, null) === null) {
             GM_setValue(STORAGE_VARS.AutoReportSpamComments, true);
         }
-        
+
         // Setup settings page
         if (window.location.href.includes(SETTINGS_PAGE)) {
             window.addEventListener('load', () => {
                 document.getElementById(STORAGE_VARS.BlockSeenStory).checked = GM_getValue(STORAGE_VARS.BlockSeenStory);
                 document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked = GM_getValue(STORAGE_VARS.AutoReportSpamComments);
-                
+
                 document.querySelector("#save_settings").addEventListener('click', () => {
                     GM_setValue(STORAGE_VARS.BlockSeenStory, document.getElementById(STORAGE_VARS.BlockSeenStory).checked);
                     GM_setValue(STORAGE_VARS.AutoReportSpamComments, document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked);
@@ -482,7 +483,7 @@
         }
     }
     /* END - SETTINGS SECTION */
-    
+
     function Sleep(time) {
         return new Promise(resolve => setTimeout(() => resolve(), time));
     }
