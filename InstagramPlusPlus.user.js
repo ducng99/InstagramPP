@@ -14,6 +14,7 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
+// @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // ==/UserScript==
 
@@ -324,13 +325,13 @@
     async function CheckSpamComments(comments) {
         if (Object.keys(comments).length > 0) {
             try {
-                const res = await fetch("https://gateway.aws.ducng.dev/IsInstagramCommentSpam", {
+                const res = await gm_fetch("https://gateway.aws.ducng.dev/IsInstagramCommentSpam", {
                     body: JSON.stringify(comments),
                     method: 'POST'
                 });
 
                 if (res.status === 200)
-                    return await res.json();
+                    return JSON.parse(res.responseText);
             }
             catch {
                 console.error("Failed to connect to check spam API");
@@ -486,5 +487,22 @@
 
     function Sleep(time) {
         return new Promise(resolve => setTimeout(() => resolve(), time));
+    }
+    
+    function gm_fetch(url, options) {
+        return new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({
+                method: options.method || 'GET',
+                url: url,
+                headers: options.headers || {},
+                data: options.body || null,
+                anonymous: true,
+                onload: (res) => {
+                    if (res.status >= 200 && res.status < 300) resolve(res);
+                    else reject(res);
+                },
+                onerror: reject
+            });
+        });
     }
 })();
