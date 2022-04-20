@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.1.2
+// @version      4.2.0
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -22,22 +22,46 @@
     "use strict"
 
     const STORAGE_VARS = {
-        BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments",
+        BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments", ShowHiddenLikesCount: "show_hidden_likes_count", DefaultVideoVolume: "default_video_volume",
         ReportedComments: "reported_comments", CheckedComments: "checked_comments"
     };
     let CapturedMediaURLs = [];
     let ReportCommentsQueue = [];
+    let GraphQLQueryHash = "";
     const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
 
     LoadSettings();
 
-    MainLoop();
-    ReportLoop();
+    window.addEventListener('load', () => {
+        const AllScripts = document.querySelectorAll('script');
+        AllScripts.forEach(script => {
+            if (script.innerHTML.startsWith("window.__additionalDataLoaded")) {
+                let matches = /window\.__additionalDataLoaded\('.+',(.+)\);/.exec(script.innerHTML);
+                if (matches[1]) {
+                    if (matches[1].startsWith('{"items":')) {
+                        let media = JSON.parse(matches[1])?.items;
+                        if (media) {
+                            media.forEach(item => ParseMediaObjFromAPI(item));
+                        }
+                    }
+                    else if (matches[1].includes("feed_items")) {
+                        let feed_items = JSON.parse(matches[1])?.feed_items;
+                        if (feed_items) {
+                            feed_items.forEach(item => ParseMediaObjFromAPI(item.media_or_ad));
+                        }
+                    }
+                }
+            }
+        });
+
+        MainLoop();
+        ReportLoop();
+    });
 
     async function MainLoop() {
         while (true) {
             // Story
-            let storyMenu = document.querySelector("._8p8kF");
+            let storyMenu = document.body.querySelector("._8p8kF");
             if (storyMenu && !storyMenu.querySelector('.igpp_download')) {
                 const newNode = document.createElement('div');
                 newNode.innerHTML = '<button class="wpO6b igpp_download" type="button"><div class="QBdPU"><svg width="18" height="18" fill="#ffffff" color="#ffffff" class="_8-yf5" viewBox="0 0 16 16"><path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708z"/></svg></div></button>';
@@ -50,7 +74,7 @@
             [...document.body.querySelectorAll('video.tWeCl:not([igpp_checked])')].forEach(video => {
                 if (video) {
                     video.setAttribute("igpp_checked", "");
-                    video.volume = 0.5;
+                    video.volume = GM_getValue(STORAGE_VARS.DefaultVideoVolume / 100, 0.5);
                 }
             });
 
@@ -85,6 +109,7 @@
     }
 
     async function ProcessArticle(article) {
+        // Add download button
         let feedMenu = article.querySelector('.ltpMr.Slqrh');
 
         if (!feedMenu.querySelector('.igpp_download')) {
@@ -109,11 +134,13 @@
             arrowSwitchRight.setAttribute('igpp_checked', '');
         }
 
+        // Report spam comments
         if (GM_getValue(STORAGE_VARS.AutoReportSpamComments)) {
             const list_comments = article.querySelectorAll('ul.XQXOT.pXf-y > ul.Mr508:not([igpp_checked])');
             const toBeCheckedComments = {};
             const IDsToElement = {};
-            
+            const reportedComments = GetReportedComments();
+
             list_comments.forEach(comment_container => {
                 const commentText = comment_container.querySelector('.MOdxS > span')?.textContent;
                 const timeLink = comment_container.querySelector('a.gU-I7');
@@ -122,7 +149,7 @@
                 if (commentText && timeLink && match) {
                     comment_container.setAttribute("igpp_checked", "");
 
-                    if (GetReportedComments().indexOf(match[1]) === -1) {
+                    if (reportedComments.indexOf(match[1]) === -1) {
                         toBeCheckedComments[match[1]] = commentText;
                         IDsToElement[match[1]] = comment_container;
                     }
@@ -140,6 +167,21 @@
                 }
                 AddReportCommentID(id);
             });
+        }
+
+        // Show hidden likes count
+        if (GM_getValue(STORAGE_VARS.ShowHiddenLikesCount)) {
+            const likesCountURLDOM = article.querySelector("div.qF0y9.Igw0E.IwRSH.eGOV_.vwCYk.YlhBV > div > a[href$='/liked_by/']");
+            const likesCountDOM = likesCountURLDOM?.querySelector("div:not([igpp_checked])");
+
+            if (likesCountDOM && !/[0-9.,]+/.test(likesCountDOM.textContent)) {
+                if (!GraphQLQueryHash)
+                    likesCountURLDOM.click();
+
+                const shortcode = likesCountURLDOM?.href.split("/")[4];
+
+                await GetLikesCount(shortcode, likesCountDOM);
+            }
         }
     }
 
@@ -183,72 +225,55 @@
         if (GM_getValue(STORAGE_VARS.BlockSeenStory) && arguments[1].includes("/stories/reel/seen")) {
             return;
         }
-        
-        // Assign an event listener
+
+        if (!GraphQLQueryHash && arguments[1].includes("/graphql/query/?query_hash=")) {
+            GraphQLQueryHash = new URLSearchParams(arguments[1].split('?')[1]).get("query_hash");
+        }
+
         this.addEventListener("load", event => {
-            let response = JSON.parse(event.target.responseText);
+            try {
+                let response = JSON.parse(event.target.responseText);
 
-            if (event.target.responseURL === "https://i.instagram.com/api/v1/feed/timeline/") {
-                response.feed_items.forEach(item => {
-                    ParseMediaObjFromAPI(item.media_or_ad);
-                });
-            }
-            else if (event.target.responseURL.includes("https://www.instagram.com/graphql/query/")) {
-                const media = response.data.user?.edge_owner_to_timeline_media.edges;
-                if (media) {
-                    media.forEach(edge => ParseMediaObjFromGraphQL(edge.node));
+                if (event.target.responseURL === "https://i.instagram.com/api/v1/feed/timeline/") {
+                    response.feed_items.forEach(item => {
+                        ParseMediaObjFromAPI(item.media_or_ad);
+                    });
+                }
+                else if (event.target.responseURL.includes("https://www.instagram.com/graphql/query/")) {
+                    const media = response.data.user?.edge_owner_to_timeline_media.edges;
+                    if (media) {
+                        media.forEach(edge => ParseMediaObjFromGraphQL(edge.node));
+                    }
+                }
+                else if (event.target.responseURL.includes("https://www.instagram.com/explore/grid/")) {
+                    let sections = response.sectional_items;
+
+                    sections.forEach(section => {
+                        if (section.layout_type === "media_grid") {
+                            section.layout_content.medias.forEach(media => ParseMediaObjFromAPI(media.media));
+                        }
+                        else if (section.layout_type.startsWith('two_by_two')) {
+                            if (section.layout_content.two_by_two_item.channel) {
+                                ParseMediaObjFromAPI(section.layout_content.two_by_two_item.channel.media);
+                            }
+                            else {
+                                ParseMediaObjFromAPI(section.layout_content.two_by_two_item.media);
+                            }
+                            section.layout_content.fill_items.forEach(item => ParseMediaObjFromAPI(item.media));
+                        }
+                    });
+                }
+                else if (event.target.responseURL.includes("https://i.instagram.com/api/v1/media/")) {
+                    if (response.items && response.items[0]) {
+                        ParseMediaObjFromAPI(response.items[0]);
+                    }
                 }
             }
-            else if (event.target.responseURL.includes("https://www.instagram.com/explore/grid/")) {
-                let sections = response.sectional_items;
-
-                sections.forEach(section => {
-                    if (section.layout_type === "media_grid") {
-                        section.layout_content.medias.forEach(media => ParseMediaObjFromAPI(media.media));
-                    }
-                    else if (section.layout_type.startsWith('two_by_two')) {
-                        if (section.layout_content.two_by_two_item.channel) {
-                            ParseMediaObjFromAPI(section.layout_content.two_by_two_item.channel.media);
-                        }
-                        else {
-                            ParseMediaObjFromAPI(section.layout_content.two_by_two_item.media);
-                        }
-                        section.layout_content.fill_items.forEach(item => ParseMediaObjFromAPI(item.media));
-                    }
-                });
-            }
-            else if (event.target.responseURL.includes("https://i.instagram.com/api/v1/media/")) {
-                if (response.items && response.items[0]) {
-                    ParseMediaObjFromAPI(response.items[0]);
-                }
-            }
+            catch { }
         }, false);
         // Call the stored reference to the native method
         XHR_open.apply(this, arguments);
     };
-
-    window.addEventListener('load', () => {
-        const AllScripts = document.querySelectorAll('script');
-        AllScripts.forEach(script => {
-            if (script.innerHTML.startsWith("window.__additionalDataLoaded")) {
-                let matches = /window\.__additionalDataLoaded\('.*',(.*)\);/.exec(script.innerHTML);
-                if (matches[1]) {
-                    if (matches[1].startsWith('{"items":')) {
-                        let media = JSON.parse(matches[1])?.items;
-                        if (media) {
-                            media.forEach(item => ParseMediaObjFromAPI(item));
-                        }
-                    }
-                    else if (matches[1].includes("feed_items")) {
-                        let feed_items = JSON.parse(matches[1])?.feed_items;
-                        if (feed_items) {
-                            feed_items.forEach(item => ParseMediaObjFromAPI(item.media_or_ad));
-                        }
-                    }
-                }
-            }
-        });
-    });
 
     function ParseMediaObjFromGraphQL(media, save = true) {
         const postID = media.shortcode;
@@ -456,6 +481,48 @@
     }
     /* END - DOWNLOAD PROFILE PIC SECTION */
 
+    /* START - GET LIKES COUNT */
+    async function GetLikesCount(shortcode, likesCountDOM) {
+        if (GraphQLQueryHash) {
+            if (!likesCountDOM.hasAttribute("igpp_last_checked") || Number.parseInt(likesCountDOM.getAttribute("igpp_last_checked")) + 5000 > Date.now()) {
+                likesCountDOM.setAttribute("igpp_last_checked", Date.now());
+            
+                try {
+                    
+                    const params = new URLSearchParams();
+                    params.set("query_hash", GraphQLQueryHash);
+                    params.set("variables", JSON.stringify({ shortcode, include_reel: false, first: 0 }));
+
+                    let response = await fetch(`https://www.instagram.com/graphql/query/?${params}`, {
+                        headers: {
+                            "X-IG-App-ID": 936619743392459,
+                            "X-CSRFToken": Cookies.get('csrftoken'),
+                        },
+                        credentials: 'include'
+                    });
+
+                    response = await response.json();
+
+                    if (response?.data?.shortcode_media?.edge_liked_by?.count) {
+                        let count = response.data.shortcode_media.edge_liked_by.count;
+
+                        let numberDOM = document.createElement("span");
+                        numberDOM.innerText = count.toLocaleString() + " ";
+                        likesCountDOM.insertBefore(numberDOM, likesCountDOM.firstChild);
+                        likesCountDOM.setAttribute("igpp_checked", "");
+                    }
+                }
+                catch (ex) {
+                    console.error(ex);
+                }
+            }
+        }
+        else {
+            console.warn("GraphQL query hash is missing");
+        }
+    }
+    /* END - GET LIKES COUNT */
+
     /* START - SETTINGS SECTION */
     // Open settings page
     GM_registerMenuCommand("Settings", () => window.open(SETTINGS_PAGE, "_blank"));
@@ -470,15 +537,27 @@
             GM_setValue(STORAGE_VARS.AutoReportSpamComments, true);
         }
 
+        if (GM_getValue(STORAGE_VARS.ShowHiddenLikesCount, null) === null) {
+            GM_setValue(STORAGE_VARS.ShowHiddenLikesCount, true);
+        }
+
+        if (GM_getValue(STORAGE_VARS.DefaultVideoVolume, null) === null) {
+            GM_setValue(STORAGE_VARS.DefaultVideoVolume, 50);
+        }
+
         // Setup settings page
         if (window.location.href.includes(SETTINGS_PAGE)) {
             window.addEventListener('load', () => {
                 document.getElementById(STORAGE_VARS.BlockSeenStory).checked = GM_getValue(STORAGE_VARS.BlockSeenStory);
                 document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked = GM_getValue(STORAGE_VARS.AutoReportSpamComments);
+                document.getElementById(STORAGE_VARS.ShowHiddenLikesCount).checked = GM_getValue(STORAGE_VARS.ShowHiddenLikesCount);
+                document.getElementById(STORAGE_VARS.DefaultVideoVolume).value = GM_getValue(STORAGE_VARS.DefaultVideoVolume);
 
                 document.querySelector("#save_settings").addEventListener('click', () => {
                     GM_setValue(STORAGE_VARS.BlockSeenStory, document.getElementById(STORAGE_VARS.BlockSeenStory).checked);
                     GM_setValue(STORAGE_VARS.AutoReportSpamComments, document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked);
+                    GM_setValue(STORAGE_VARS.ShowHiddenLikesCount, document.getElementById(STORAGE_VARS.ShowHiddenLikesCount).checked);
+                    GM_setValue(STORAGE_VARS.DefaultVideoVolume, document.getElementById(STORAGE_VARS.DefaultVideoVolume).value);
                 });
             });
         }
@@ -488,7 +567,7 @@
     function Sleep(time) {
         return new Promise(resolve => setTimeout(() => resolve(), time));
     }
-    
+
     function gm_fetch(url, options) {
         return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({

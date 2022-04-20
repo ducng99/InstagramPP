@@ -6,8 +6,9 @@ A "powerful" tool provides enhanced features to Instagram web version<br/><br/>
 - **Hide spam comments** *(not 100%)*
 - Download stories
 - Download pictures and videos from posts
-- Download HD profile pic
+- Download profile pic HD (or highest resolution possible)
 - Block 'seen' stories (watch stories in private)
+- Show hidden likes count
 
 ## Installation:
 1. Install [Tampermonkey](https://www.tampermonkey.net/)
