@@ -475,41 +475,36 @@
 
     /* START - GET LIKES COUNT */
     async function GetLikesCount(shortcode, likesCountDOM) {
-        if (GraphQLQueryHash) {
-            if (!likesCountDOM.hasAttribute("igpp_last_checked") || Number.parseInt(likesCountDOM.getAttribute("igpp_last_checked")) + 5000 > Date.now()) {
-                likesCountDOM.setAttribute("igpp_last_checked", Date.now());
+        if (!likesCountDOM.hasAttribute("igpp_last_checked") || Number.parseInt(likesCountDOM.getAttribute("igpp_last_checked")) + 5000 > Date.now()) {
+            likesCountDOM.setAttribute("igpp_last_checked", Date.now());
 
-                try {
-                    const params = new URLSearchParams();
-                    params.set("query_hash", "d5d763b1e2acf209d62d22d184488e57");
-                    params.set("variables", JSON.stringify({ shortcode, include_reel: false, first: 0 }));
+            try {
+                const params = new URLSearchParams();
+                params.set("query_hash", "d5d763b1e2acf209d62d22d184488e57");
+                params.set("variables", JSON.stringify({ shortcode, include_reel: false, first: 0 }));
 
-                    let response = await fetch(`https://www.instagram.com/graphql/query/?${params}`, {
-                        headers: {
-                            "X-IG-App-ID": 936619743392459,
-                            "X-CSRFToken": Cookies.get('csrftoken'),
-                        },
-                        credentials: 'include'
-                    });
+                let response = await fetch(`https://www.instagram.com/graphql/query/?${params}`, {
+                    headers: {
+                        "X-IG-App-ID": 936619743392459,
+                        "X-CSRFToken": Cookies.get('csrftoken'),
+                    },
+                    credentials: 'include'
+                });
 
-                    response = await response.json();
+                response = await response.json();
 
-                    if (response?.data?.shortcode_media?.edge_liked_by?.count) {
-                        let count = response.data.shortcode_media.edge_liked_by.count;
+                if (response?.data?.shortcode_media?.edge_liked_by?.count) {
+                    let count = response.data.shortcode_media.edge_liked_by.count;
 
-                        let numberDOM = document.createElement("span");
-                        numberDOM.innerText = count.toLocaleString() + " ";
-                        likesCountDOM.insertBefore(numberDOM, likesCountDOM.firstChild);
-                        likesCountDOM.setAttribute("igpp_checked", "");
-                    }
-                }
-                catch (ex) {
-                    console.error(ex);
+                    let numberDOM = document.createElement("span");
+                    numberDOM.innerText = count.toLocaleString() + " ";
+                    likesCountDOM.insertBefore(numberDOM, likesCountDOM.firstChild);
+                    likesCountDOM.setAttribute("igpp_checked", "");
                 }
             }
-        }
-        else {
-            console.warn("GraphQL query hash is missing");
+            catch (ex) {
+                console.error(ex);
+            }
         }
     }
     /* END - GET LIKES COUNT */
