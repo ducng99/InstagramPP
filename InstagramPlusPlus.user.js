@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.2.0
+// @version      4.2.1
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -27,7 +27,6 @@
     };
     let CapturedMediaURLs = [];
     let ReportCommentsQueue = [];
-    let GraphQLQueryHash = "";
     const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
 
     LoadSettings();
@@ -175,9 +174,6 @@
             const likesCountDOM = likesCountURLDOM?.querySelector("div:not([igpp_checked])");
 
             if (likesCountDOM && !/[0-9.,]+/.test(likesCountDOM.textContent)) {
-                if (!GraphQLQueryHash)
-                    likesCountURLDOM.click();
-
                 const shortcode = likesCountURLDOM?.href.split("/")[4];
 
                 await GetLikesCount(shortcode, likesCountDOM);
@@ -224,10 +220,6 @@
     XMLHttpRequest.prototype.open = function () {
         if (GM_getValue(STORAGE_VARS.BlockSeenStory) && arguments[1].includes("/stories/reel/seen")) {
             return;
-        }
-
-        if (!GraphQLQueryHash && arguments[1].includes("/graphql/query/?query_hash=")) {
-            GraphQLQueryHash = new URLSearchParams(arguments[1].split('?')[1]).get("query_hash");
         }
 
         this.addEventListener("load", event => {
@@ -486,11 +478,10 @@
         if (GraphQLQueryHash) {
             if (!likesCountDOM.hasAttribute("igpp_last_checked") || Number.parseInt(likesCountDOM.getAttribute("igpp_last_checked")) + 5000 > Date.now()) {
                 likesCountDOM.setAttribute("igpp_last_checked", Date.now());
-            
+
                 try {
-                    
                     const params = new URLSearchParams();
-                    params.set("query_hash", GraphQLQueryHash);
+                    params.set("query_hash", "d5d763b1e2acf209d62d22d184488e57");
                     params.set("variables", JSON.stringify({ shortcode, include_reel: false, first: 0 }));
 
                     let response = await fetch(`https://www.instagram.com/graphql/query/?${params}`, {
