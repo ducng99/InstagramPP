@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.2.1
+// @version      4.3.0
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -108,29 +108,23 @@
     }
 
     async function ProcessArticle(article) {
-        // Add download button
+        // Download post's image/video
         let feedMenu = article.querySelector('.ltpMr.Slqrh');
 
         if (!feedMenu.querySelector('.igpp_download')) {
-            const src = GetMediaSrc(article);
-
-            if (src) {
-                let newNode = document.createElement("div");
-                newNode.innerHTML = `<span class="igpp_download"><a class="wpO6b" href="${src}" target="_blank"><div class="QBdPU"><svg class="_8-yf5" width="24" height="24" viewBox="0 0 16 16" color="#262626" fill="#262626" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></div></a></span>`;
-                feedMenu.appendChild(newNode.firstChild);
-            }
-        }
-
-        let arrowSwitchLeft = article.querySelector('.coreSpriteLeftChevron:not([igpp_checked])');
-        if (arrowSwitchLeft) {
-            arrowSwitchLeft.addEventListener('click', () => { ResetDownloadLink(article, 100); });
-            arrowSwitchLeft.setAttribute('igpp_checked', '');
-        }
-
-        let arrowSwitchRight = article.querySelector('.coreSpriteRightChevron:not([igpp_checked])');
-        if (arrowSwitchRight) {
-            arrowSwitchRight.addEventListener('click', () => { ResetDownloadLink(article, 100); });
-            arrowSwitchRight.setAttribute('igpp_checked', '');
+            let newNode = document.createElement("div");
+            newNode.innerHTML = `<span class="igpp_download"><div class="wpO6b" target="_blank"><div class="QBdPU"><svg class="_8-yf5" width="24" height="24" viewBox="0 0 16 16" color="#262626" fill="#262626" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></div></div></span>`;
+            newNode.firstChild.addEventListener('click', () => {
+                let src = GetMediaSrc(article);
+                
+                if (src) {
+                    window.open(src, "_blank");
+                }
+                else {
+                    alert('Error: Cannot Find the link');
+                }
+            });
+            feedMenu.appendChild(newNode.firstChild);
         }
 
         // Report spam comments
@@ -205,13 +199,6 @@
         }
 
         return null;
-    }
-
-    function ResetDownloadLink(article, timeout) {
-        setTimeout(() => {
-            article.querySelector(".igpp_download")?.remove();
-            ProcessArticle(article);
-        }, timeout);
     }
 
     const XHR_open = XMLHttpRequest.prototype.open;
