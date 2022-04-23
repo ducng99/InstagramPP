@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.3.0
+// @version      4.4.0
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -23,6 +23,7 @@
 
     const STORAGE_VARS = {
         BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments", ShowHiddenLikesCount: "show_hidden_likes_count", DefaultVideoVolume: "default_video_volume",
+        HideSponsoredPosts: "hide_sponsored_posts",
         ReportedComments: "reported_comments", CheckedComments: "checked_comments"
     };
     let CapturedMediaURLs = [];
@@ -108,15 +109,23 @@
     }
 
     async function ProcessArticle(article) {
+        // Hide sponsored posts
+        if (GM_getValue(STORAGE_VARS.HideSponsoredPosts)) {
+            if (article.querySelector('header span.y1ezF._8XEIW')) {
+                article.style.visibility = 'collapse';
+                return;
+            }
+        }
+
         // Download post's image/video
         let feedMenu = article.querySelector('.ltpMr.Slqrh');
 
         if (!feedMenu.querySelector('.igpp_download')) {
             let newNode = document.createElement("div");
-            newNode.innerHTML = `<span class="igpp_download"><div class="wpO6b" target="_blank"><div class="QBdPU"><svg class="_8-yf5" width="24" height="24" viewBox="0 0 16 16" color="#262626" fill="#262626" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></div></div></span>`;
+            newNode.innerHTML = `<span class="igpp_download"><div class="wpO6b"><div class="QBdPU"><svg class="_8-yf5" width="24" height="24" viewBox="0 0 16 16" color="#262626" fill="#262626" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></div></div></span>`;
             newNode.firstChild.addEventListener('click', () => {
                 let src = GetMediaSrc(article);
-                
+
                 if (src) {
                     window.open(src, "_blank");
                 }
@@ -464,13 +473,10 @@
     async function GetLikesCount(shortcode, likesCountDOM) {
         if (!likesCountDOM.hasAttribute("igpp_last_checked") || Number.parseInt(likesCountDOM.getAttribute("igpp_last_checked")) + 5000 > Date.now()) {
             likesCountDOM.setAttribute("igpp_last_checked", Date.now());
+            const variables = JSON.stringify({ shortcode, include_reel: false, first: 0 });
 
             try {
-                const params = new URLSearchParams();
-                params.set("query_hash", "d5d763b1e2acf209d62d22d184488e57");
-                params.set("variables", JSON.stringify({ shortcode, include_reel: false, first: 0 }));
-
-                let response = await fetch(`https://www.instagram.com/graphql/query/?${params}`, {
+                let response = await fetch(`https://www.instagram.com/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables=${variables}`, {
                     headers: {
                         "X-IG-App-ID": 936619743392459,
                         "X-CSRFToken": Cookies.get('csrftoken'),
@@ -514,6 +520,10 @@
             GM_setValue(STORAGE_VARS.ShowHiddenLikesCount, true);
         }
 
+        if (GM_getValue(STORAGE_VARS.HideSponsoredPosts, null) === null) {
+            GM_setValue(STORAGE_VARS.HideSponsoredPosts, true);
+        }
+
         if (GM_getValue(STORAGE_VARS.DefaultVideoVolume, null) === null) {
             GM_setValue(STORAGE_VARS.DefaultVideoVolume, 50);
         }
@@ -524,12 +534,14 @@
                 document.getElementById(STORAGE_VARS.BlockSeenStory).checked = GM_getValue(STORAGE_VARS.BlockSeenStory);
                 document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked = GM_getValue(STORAGE_VARS.AutoReportSpamComments);
                 document.getElementById(STORAGE_VARS.ShowHiddenLikesCount).checked = GM_getValue(STORAGE_VARS.ShowHiddenLikesCount);
+                document.getElementById(STORAGE_VARS.HideSponsoredPosts).checked = GM_getValue(STORAGE_VARS.HideSponsoredPosts);
                 document.getElementById(STORAGE_VARS.DefaultVideoVolume).value = GM_getValue(STORAGE_VARS.DefaultVideoVolume);
 
                 document.querySelector("#save_settings").addEventListener('click', () => {
                     GM_setValue(STORAGE_VARS.BlockSeenStory, document.getElementById(STORAGE_VARS.BlockSeenStory).checked);
                     GM_setValue(STORAGE_VARS.AutoReportSpamComments, document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked);
                     GM_setValue(STORAGE_VARS.ShowHiddenLikesCount, document.getElementById(STORAGE_VARS.ShowHiddenLikesCount).checked);
+                    GM_setValue(STORAGE_VARS.HideSponsoredPosts, document.getElementById(STORAGE_VARS.HideSponsoredPosts).checked);
                     GM_setValue(STORAGE_VARS.DefaultVideoVolume, document.getElementById(STORAGE_VARS.DefaultVideoVolume).value);
                 });
             });

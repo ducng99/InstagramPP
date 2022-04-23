@@ -9,6 +9,8 @@ A "powerful" tool provides enhanced features to Instagram web version<br/><br/>
 - Download profile pic HD (or highest resolution possible)
 - Block 'seen' stories (watch stories in private)
 - Show hidden likes count
+- Set default volume for videos
+- Hide "Paid partnership with..." posts
 
 ## Installation:
 1. Install [Tampermonkey](https://www.tampermonkey.net/)
