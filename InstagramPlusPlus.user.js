@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.4.0
+// @version      4.4.1
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -86,7 +86,7 @@
             }
 
             // News Feed
-            let articles = [...document.body.querySelectorAll("article.M9sTE.L_LMM")];
+            let articles = [...document.body.querySelectorAll("article")];
             await Promise.all(articles.map(ProcessArticle));
 
             await Sleep(2000);
@@ -118,11 +118,11 @@
         }
 
         // Download post's image/video
-        let feedMenu = article.querySelector('.ltpMr.Slqrh');
+        let feedMenu = article.querySelector('._aamu._aat0');
 
         if (!feedMenu.querySelector('.igpp_download')) {
             let newNode = document.createElement("div");
-            newNode.innerHTML = `<span class="igpp_download"><div class="wpO6b"><div class="QBdPU"><svg class="_8-yf5" width="24" height="24" viewBox="0 0 16 16" color="#262626" fill="#262626" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></div></div></span>`;
+            newNode.innerHTML = `<span class="igpp_download"><div><button class="_abl-"><svg width="24" height="24" viewBox="0 0 16 16" color="#262626" fill="#262626" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></button></div></span>`;
             newNode.firstChild.addEventListener('click', () => {
                 let src = GetMediaSrc(article);
 
@@ -138,14 +138,14 @@
 
         // Report spam comments
         if (GM_getValue(STORAGE_VARS.AutoReportSpamComments)) {
-            const list_comments = article.querySelectorAll('ul.XQXOT.pXf-y > ul.Mr508:not([igpp_checked])');
+            const list_comments = article.querySelectorAll('ul._a9z6._a9za > ul._a9z6._a9za:not([igpp_checked])');
             const toBeCheckedComments = {};
             const IDsToElement = {};
             const reportedComments = GetReportedComments();
 
             list_comments.forEach(comment_container => {
-                const commentText = comment_container.querySelector('.MOdxS > span')?.textContent;
-                const timeLink = comment_container.querySelector('a.gU-I7');
+                const commentText = comment_container.querySelector('._a9zs > span')?.textContent;
+                const timeLink = comment_container.querySelector('a._a9zg._a6hd');
                 const match = /\/p\/[a-z0-9-_]+\/c\/(\d+)/i.exec(timeLink.href);
 
                 if (commentText && timeLink && match) {
@@ -173,8 +173,8 @@
 
         // Show hidden likes count
         if (GM_getValue(STORAGE_VARS.ShowHiddenLikesCount)) {
-            const likesCountURLDOM = article.querySelector("div.qF0y9.Igw0E.IwRSH.eGOV_.vwCYk.YlhBV > div > a[href$='/liked_by/']");
-            const likesCountDOM = likesCountURLDOM?.querySelector("div:not([igpp_checked])");
+            const likesCountURLDOM = article.querySelector("div._ab9m._ab9r._aba-._abbg._abby._abce a[href$='/liked_by/']");
+            const likesCountDOM = likesCountURLDOM?.querySelector("div._aacl._aaco._aacw._aacx._aada._aade:not([igpp_checked])");
 
             if (likesCountDOM && !/[0-9.,]+/.test(likesCountDOM.textContent)) {
                 const shortcode = likesCountURLDOM?.href.split("/")[4];
@@ -186,14 +186,14 @@
 
     function GetMediaSrc(article) {
         let mediaIndex = -1;
-        const mediaCountDOM = article.querySelector("div._3eoV-.IjCL9");
+        const mediaCountDOM = article.querySelector("div._aamj._acvz._acnc._acng");
 
         if (mediaCountDOM && mediaCountDOM.children.length > 1) {
-            let current = mediaCountDOM.querySelector(".Yi5aA.XCodT");
+            let current = mediaCountDOM.querySelector("._acnf");
             mediaIndex = [...mediaCountDOM.children].indexOf(current);
         }
 
-        const dateDOM = article.querySelector("a.c-Yi7");
+        const dateDOM = article.querySelector("a._aaqd._a6hd");
         if (dateDOM) {
             for (const links of CapturedMediaURLs) {
                 if (dateDOM.href.includes(links.postID)) {
