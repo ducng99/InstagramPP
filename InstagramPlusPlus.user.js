@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.4.1
+// @version      4.4.2
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -186,7 +186,7 @@
 
     function GetMediaSrc(article) {
         let mediaIndex = -1;
-        const mediaCountDOM = article.querySelector("div._aamj._acvz._acnc._acng");
+        const mediaCountDOM = article.querySelector("div._acvz._acnc");
 
         if (mediaCountDOM && mediaCountDOM.children.length > 1) {
             let current = mediaCountDOM.querySelector("._acnf");
