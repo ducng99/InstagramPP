@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.4.3
+// @version      4.4.4
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -79,7 +79,7 @@
             });
 
             // Profile pic
-            let profilePicContainer = document.body.querySelector('.eC4Dz:not([igpp_checked])');
+            let profilePicContainer = document.body.querySelector('._aa_j:not([igpp_checked])');
             if (profilePicContainer) {
                 await ProcessProfilePic(profilePicContainer);
                 profilePicContainer.setAttribute("igpp_checked", "");
@@ -435,15 +435,15 @@
             const username = match[1];
 
             try {
-                let response = await fetch(`https://www.instagram.com/${username}/?__a=1`, {
+                let response = await fetch(`https://i.instagram.com/api/v1/users/web_profile_info/?username=${username}`, {
                     headers: {
                         "X-IG-App-ID": 936619743392459
                     }
                 });
                 response = await response.json();
 
-                if (response?.graphql?.user?.id) {
-                    const userID = response.graphql.user.id;
+                if (response?.data?.user?.id) {
+                    const userID = response.data.user.id;
 
                     response = await fetch(`https://i.instagram.com/api/v1/users/${userID}/info/`, {
                         headers: {
@@ -457,7 +457,7 @@
                         const profilePicURL = response.user.hd_profile_pic_url_info.url;
 
                         const tmpDOM = document.createElement("div");
-                        tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em;"><button class="sqdOP L3NKy y3zKF">Download</button></a>`;
+                        tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em;"><button class="_acan _acap _acas">Download</button></a>`;
                         container.appendChild(tmpDOM.firstChild);
                     }
                 }
