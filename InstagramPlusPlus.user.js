@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.4.4
+// @version      4.4.5
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -195,14 +195,14 @@
 
         const dateDOM = article.querySelector("a._aaqd._a6hd");
         if (dateDOM) {
-            for (const links of CapturedMediaURLs) {
-                if (dateDOM.href.includes(links.postID)) {
-                    if (mediaIndex === -1) {
-                        return links.src;
-                    }
-                    else {
-                        return links.srcs[mediaIndex];
-                    }
+            const link = CapturedMediaURLs.find(m => dateDOM.href.includes(m.postID));
+            
+            if (link) {
+                if (mediaIndex === -1) {
+                    return link.src;
+                }
+                else {
+                    return link.srcs[mediaIndex];
                 }
             }
         }
@@ -224,7 +224,9 @@
 
                 if (event.target.responseURL === "https://i.instagram.com/api/v1/feed/timeline/") {
                     response.feed_items.forEach(item => {
-                        ParseMediaObjFromAPI(item.media_or_ad);
+                        if (item.media_or_ad) {
+                            ParseMediaObjFromAPI(item.media_or_ad);
+                        }
                     });
                 }
                 else if (event.target.responseURL.includes("https://www.instagram.com/graphql/query/")) {
