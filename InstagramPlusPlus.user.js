@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.4.5
+// @version      4.4.6
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -118,7 +118,7 @@
         }
 
         // Download post's image/video
-        let feedMenu = article.querySelector('._aamu._aat0');
+        let feedMenu = article.querySelector('._aamu._aaz9._aazx');
 
         if (feedMenu && !feedMenu.querySelector('.igpp_download')) {
             let newNode = document.createElement("div");
@@ -195,14 +195,14 @@
 
         const dateDOM = article.querySelector("a._aaqd._a6hd");
         if (dateDOM) {
-            const link = CapturedMediaURLs.find(m => dateDOM.href.includes(m.postID));
+            const linkR = CapturedMediaURLs.find(link => dateDOM.href.includes(link.postID));
             
-            if (link) {
+            if (linkR) {
                 if (mediaIndex === -1) {
-                    return link.src;
+                    return linkR.src;
                 }
                 else {
-                    return link.srcs[mediaIndex];
+                    return linkR.srcs[mediaIndex];
                 }
             }
         }
@@ -295,7 +295,7 @@
     }
 
     function ParseMediaObjFromAPI(item, save = true) {
-        const postID = item.code;
+        const postID = item.code ?? "";
 
         if (item.carousel_media) {
             let links = [];
