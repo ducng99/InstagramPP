@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.4.7
+// @version      4.4.8
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -138,7 +138,7 @@
 
         // Report spam comments
         if (GM_getValue(STORAGE_VARS.AutoReportSpamComments)) {
-            const list_comments = article.querySelectorAll('ul._a9ym:not([igpp_checked]), ul._a9yo:not([igpp_checked])');
+            const list_comments = article.querySelectorAll('ul._a9ym:not([igpp_checked]), ul._a9yo > div._aa06:not([igpp_checked])');
             const toBeCheckedComments = {};
             const IDsToElement = {};
             const reportedComments = GetReportedComments();
