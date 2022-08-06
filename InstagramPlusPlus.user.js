@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.4.8
+// @version      4.4.9
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -88,6 +88,16 @@
             // News Feed
             let articles = [...document.body.querySelectorAll("article")];
             await Promise.all(articles.map(ProcessArticle));
+            
+            // Clear old reported comments
+            const reportedComments = GetReportedComments();
+            Object.entries(reportedComments).forEach(([key, value]) => {
+                if (value < Date.now() - 1000 * 60 * 60 * 24 * 7) {
+                    delete reportedComments[key];
+                }
+            });
+            
+            GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(reportedComments));
 
             await Sleep(2000);
         }
@@ -151,7 +161,7 @@
                 if (commentText && timeLink && match) {
                     comment_container.setAttribute("igpp_checked", "");
 
-                    if (reportedComments.indexOf(match[1]) === -1) {
+                    if (!(match[1] in reportedComments)) {
                         toBeCheckedComments[match[1]] = commentText;
                         IDsToElement[match[1]] = comment_container;
                     }
@@ -420,12 +430,13 @@
     }
 
     function GetReportedComments() {
-        return JSON.parse(GM_getValue(STORAGE_VARS.ReportedComments, "[]"));
+        return JSON.parse(GM_getValue(STORAGE_VARS.ReportedComments, "{}"));
     }
 
     function AddReportedComment(id) {
         let storedIDs = GetReportedComments();
-        GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify([...new Set([...storedIDs, id])]));
+        storedIDs[id] = Date.now();
+        GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(storedIDs));
     }
 
     /* END - REPORT SPAM SECTION */
