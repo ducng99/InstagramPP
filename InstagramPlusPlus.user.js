@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.4.6
+// @version      4.4.7
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -138,15 +138,15 @@
 
         // Report spam comments
         if (GM_getValue(STORAGE_VARS.AutoReportSpamComments)) {
-            const list_comments = article.querySelectorAll('ul._a9z6._a9za > ul._a9z6._a9za:not([igpp_checked])');
+            const list_comments = article.querySelectorAll('ul._a9ym:not([igpp_checked]), ul._a9yo:not([igpp_checked])');
             const toBeCheckedComments = {};
             const IDsToElement = {};
             const reportedComments = GetReportedComments();
 
             list_comments.forEach(comment_container => {
-                const commentText = comment_container.querySelector('._a9zs > span')?.textContent;
+                const commentText = comment_container.querySelector('._a9zr > span, ._a9zs > span')?.textContent;
                 const timeLink = comment_container.querySelector('a._a9zg._a6hd');
-                const match = /\/p\/[a-z0-9-_]+\/c\/(\d+)/i.exec(timeLink.href);
+                const match = /\/p\/[a-z0-9-_]+\/c\/(\d+)/i.exec(timeLink?.href);
 
                 if (commentText && timeLink && match) {
                     comment_container.setAttribute("igpp_checked", "");
