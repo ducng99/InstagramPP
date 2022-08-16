@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.4.9
+// @version      4.4.10
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -128,7 +128,7 @@
         }
 
         // Download post's image/video
-        let feedMenu = article.querySelector('._aamu._aaz9._aazx');
+        let feedMenu = article.querySelector('section._aamu');
 
         if (feedMenu && !feedMenu.querySelector('.igpp_download')) {
             let newNode = document.createElement("div");
