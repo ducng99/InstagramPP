@@ -29,6 +29,7 @@
     let CapturedMediaURLs = [];
     let ReportCommentsQueue = [];
     const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
+    const REPORT_EXPIRE_TIME = 604800000;   // 7 days
 
     LoadSettings();
 
@@ -53,6 +54,16 @@
                 }
             }
         });
+
+        // Clear old reported comments
+        const reportedComments = GetReportedComments();
+        Object.entries(reportedComments).forEach(([key, value]) => {
+            if (value < Date.now() - REPORT_EXPIRE_TIME) {
+                delete reportedComments[key];
+            }
+        });
+
+        GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(reportedComments));
 
         MainLoop();
         ReportLoop();
@@ -88,16 +99,6 @@
             // News Feed
             let articles = [...document.body.querySelectorAll("article")];
             await Promise.all(articles.map(ProcessArticle));
-            
-            // Clear old reported comments
-            const reportedComments = GetReportedComments();
-            Object.entries(reportedComments).forEach(([key, value]) => {
-                if (value < Date.now() - 1000 * 60 * 60 * 24 * 7) {
-                    delete reportedComments[key];
-                }
-            });
-            
-            GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(reportedComments));
 
             await Sleep(2000);
         }
