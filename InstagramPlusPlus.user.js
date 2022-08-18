@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.4.11
+// @version      4.5.0
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -13,6 +13,7 @@
 // @run-at       document-start
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_addStyle
 // @grant        GM_registerMenuCommand
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
@@ -23,13 +24,13 @@
 
     const STORAGE_VARS = {
         BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments", ShowHiddenLikesCount: "show_hidden_likes_count", DefaultVideoVolume: "default_video_volume",
-        HideSponsoredPosts: "hide_sponsored_posts",
+        HideSponsoredPosts: "hide_sponsored_posts", RemoveBoldFont: "remove_bold_font",
         ReportedComments: "reported_comments", CheckedComments: "checked_comments"
     };
     let CapturedMediaURLs = [];
     let ReportCommentsQueue = [];
     const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
-    const REPORT_EXPIRE_TIME = 604800000;   // 7 days
+    const REPORT_EXPIRE_TIME = 604800000;   // 1 week
 
     LoadSettings();
 
@@ -64,6 +65,10 @@
         });
 
         GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(reportedComments));
+        
+        if (GM_getValue(STORAGE_VARS.RemoveBoldFont)) {
+            GM_addStyle('._adda { font-weight: var(--font-weight-system-semibold) !important }');
+        }
 
         MainLoop();
         ReportLoop();
@@ -549,6 +554,7 @@
                 document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked = GM_getValue(STORAGE_VARS.AutoReportSpamComments);
                 document.getElementById(STORAGE_VARS.ShowHiddenLikesCount).checked = GM_getValue(STORAGE_VARS.ShowHiddenLikesCount);
                 document.getElementById(STORAGE_VARS.HideSponsoredPosts).checked = GM_getValue(STORAGE_VARS.HideSponsoredPosts);
+                document.getElementById(STORAGE_VARS.RemoveBoldFont).checked = GM_getValue(STORAGE_VARS.RemoveBoldFont);
                 document.getElementById(STORAGE_VARS.DefaultVideoVolume).value = GM_getValue(STORAGE_VARS.DefaultVideoVolume);
 
                 document.querySelector("#save_settings").addEventListener('click', () => {
@@ -556,6 +562,7 @@
                     GM_setValue(STORAGE_VARS.AutoReportSpamComments, document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked);
                     GM_setValue(STORAGE_VARS.ShowHiddenLikesCount, document.getElementById(STORAGE_VARS.ShowHiddenLikesCount).checked);
                     GM_setValue(STORAGE_VARS.HideSponsoredPosts, document.getElementById(STORAGE_VARS.HideSponsoredPosts).checked);
+                    GM_setValue(STORAGE_VARS.RemoveBoldFont, document.getElementById(STORAGE_VARS.RemoveBoldFont).checked);
                     GM_setValue(STORAGE_VARS.DefaultVideoVolume, document.getElementById(STORAGE_VARS.DefaultVideoVolume).value);
                 });
             });

@@ -11,6 +11,7 @@ A "powerful" tool provides enhanced features to Instagram web version<br/><br/>
 - Show hidden likes count
 - Set default volume for videos
 - Hide "Paid partnership with..." posts
+- Remove new bold font
 
 ## Installation:
 1. Install [Tampermonkey](https://www.tampermonkey.net/)
