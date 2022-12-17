@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.5.2
+// @version      4.5.3
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -95,7 +95,7 @@
             });
 
             // Profile pic
-            let profilePicContainer = document.body.querySelector('._aarf:not([igpp_checked])');
+            let profilePicContainer = document.body.querySelector('div.x9ozhqo.x9ozhqo ._aarf:not([igpp_checked])');
             if (profilePicContainer) {
                 await ProcessProfilePic(profilePicContainer.parentElement);
                 profilePicContainer.setAttribute("igpp_checked", "");

@@ -18,4 +18,7 @@ A "powerful" tool provides enhanced features to Instagram web version<br/><br/>
 2. Install [this script](https://github.com/ducng99/InstagramPP/raw/master/InstagramPlusPlus.user.js)
 3. *(optional)* [Configure](https://static.ducng.dev/InstagramPP) the script
 
+## Issues
+- Only support English
+
 *Please create an issue or a pull request if you want more features (because i got none)*
