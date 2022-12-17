@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.5.0
+// @version      4.5.1
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -9,7 +9,7 @@
 // @homepage     https://github.com/ducng99/InstagramPP
 // @match        https://www.instagram.com/*
 // @match        https://static.ducng.dev/InstagramPP/
-// @require      https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js
+// @require      https://cdn.jsdelivr.net/npm/js-cookie@latest/dist/js.cookie.min.js
 // @run-at       document-start
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -65,7 +65,7 @@
         });
 
         GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(reportedComments));
-        
+
         if (GM_getValue(STORAGE_VARS.RemoveBoldFont)) {
             GM_addStyle('._adda { font-weight: var(--font-weight-system-semibold) !important }');
         }
@@ -95,9 +95,9 @@
             });
 
             // Profile pic
-            let profilePicContainer = document.body.querySelector('._aa_j:not([igpp_checked])');
+            let profilePicContainer = document.body.querySelector('._aarf:not([igpp_checked])');
             if (profilePicContainer) {
-                await ProcessProfilePic(profilePicContainer);
+                await ProcessProfilePic(profilePicContainer.parentElement);
                 profilePicContainer.setAttribute("igpp_checked", "");
             }
 
@@ -110,7 +110,7 @@
     }
 
     function DownloadStory() {
-        let stPicLink = document.body.querySelector("img._aa63._ac51")?.getAttribute("srcset")?.split(" ")[0];
+        let stPicLink = document.body.querySelector("img._aa63")?.getAttribute("srcset")?.split(" ")[0];
         let stVidLink = document.body.querySelector("video._aa63._ac3u")?.querySelector("source")?.getAttribute("src");
 
         if (stVidLink) {
@@ -138,7 +138,7 @@
 
         if (feedMenu && !feedMenu.querySelector('.igpp_download')) {
             let newNode = document.createElement("div");
-            newNode.innerHTML = `<span class="igpp_download"><div><button class="_abl-"><svg width="24" height="24" viewBox="0 0 16 16" color="#262626" fill="#262626" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></button></div></span>`;
+            newNode.innerHTML = `<span class="igpp_download"><div><div aria-disabled="false" role="button" style="cursor: pointer;" tabindex="0"><button class="_abl-" type="button"><div class="_abm0"><svg class="_ab6-" role="img" width="24" height="24" viewBox="0 0 16 16" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></div></button></div></div></span>`;
             newNode.firstChild.addEventListener('click', () => {
                 let src = GetMediaSrc(article);
 
@@ -209,10 +209,11 @@
             mediaIndex = [...mediaCountDOM.children].indexOf(current);
         }
 
-        const dateDOM = article.querySelector("a._aaqd._a6hd");
+        const dateDOM = article.querySelector("a[href^='/p/']");
         if (dateDOM) {
             const linkR = CapturedMediaURLs.find(link => dateDOM.href.includes(link.postID));
-            
+            console.log(dateDOM);
+
             if (linkR) {
                 if (mediaIndex === -1) {
                     return linkR.src;
@@ -238,7 +239,7 @@
             try {
                 let response = JSON.parse(event.target.responseText);
 
-                if (event.target.responseURL === "https://i.instagram.com/api/v1/feed/timeline/") {
+                if (event.target.responseURL === "https://www.instagram.com/api/v1/feed/timeline/") {
                     response.feed_items.forEach(item => {
                         if (item.media_or_ad) {
                             ParseMediaObjFromAPI(item.media_or_ad);
@@ -269,7 +270,7 @@
                         }
                     });
                 }
-                else if (event.target.responseURL.includes("https://i.instagram.com/api/v1/media/")) {
+                else if (event.target.responseURL.includes("https://www.instagram.com/api/v1/media/")) {
                     if (response.items && response.items[0]) {
                         ParseMediaObjFromAPI(response.items[0]);
                     }
@@ -454,7 +455,7 @@
             const username = match[1];
 
             try {
-                let response = await fetch(`https://i.instagram.com/api/v1/users/web_profile_info/?username=${username}`, {
+                let response = await fetch(`https://www.instagram.com/api/v1/users/web_profile_info/?username=${username}`, {
                     headers: {
                         "X-IG-App-ID": 936619743392459
                     }
@@ -464,7 +465,7 @@
                 if (response?.data?.user?.id) {
                     const userID = response.data.user.id;
 
-                    response = await fetch(`https://i.instagram.com/api/v1/users/${userID}/info/`, {
+                    response = await fetch(`https://www.instagram.com/api/v1/users/${userID}/info/`, {
                         headers: {
                             "X-IG-App-ID": 936619743392459
                         },
@@ -476,7 +477,7 @@
                         const profilePicURL = response.user.hd_profile_pic_url_info.url;
 
                         const tmpDOM = document.createElement("div");
-                        tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em;"><button class="_acan _acap _acas">Download</button></a>`;
+                        tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em; text-decoration: none;"><button class="_acan _acap _acas">Download</button></a>`;
                         container.appendChild(tmpDOM.firstChild);
                     }
                 }
@@ -590,4 +591,18 @@
             });
         });
     }
+
+    GM_addStyle(`
+html._aa4d .igpp_download svg {
+    fill: #fafafa;
+}
+
+html._aa4c .igpp_download svg {
+    fill: #262626;
+}
+
+.igpp_download svg:hover {
+    fill: #8e8e8e !important;
+}
+    `);
 })();
