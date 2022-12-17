@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.5.1
+// @version      4.5.2
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -127,8 +127,8 @@
     async function ProcessArticle(article) {
         // Hide sponsored posts
         if (GM_getValue(STORAGE_VARS.HideSponsoredPosts)) {
-            if (article.querySelector('header span._aays._aaqi')) {
-                article.style.visibility = 'collapse';
+            if (article.querySelector('header span.x5n08af.x1pg5gke.x132q4wb')) {
+                article.children[0].style.display = 'none';
                 return;
             }
         }
