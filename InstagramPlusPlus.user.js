@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.5.3
+// @version      4.5.4
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -27,7 +27,7 @@
         HideSponsoredPosts: "hide_sponsored_posts", RemoveBoldFont: "remove_bold_font",
         ReportedComments: "reported_comments", CheckedComments: "checked_comments"
     };
-    let CapturedMediaURLs = [];
+    let CapturedMediaURLs = {};
     let ReportCommentsQueue = [];
     const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
     const REPORT_EXPIRE_TIME = 604800000;   // 1 week
@@ -52,6 +52,16 @@
                             feed_items.forEach(item => ParseMediaObjFromAPI(item.media_or_ad));
                         }
                     }
+                }
+            }
+            else if (script.innerHTML.includes("xdt_api__v1__media__shortcode__web_info")) {
+                try {
+                    const content = JSON.parse(script.innerHTML);
+                    const items = content.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xdt_api__v1__media__shortcode__web_info.items;
+                    items.forEach(item => ParseMediaObjFromAPI(item));
+                }
+                catch (ex) {
+                    console.error(ex);
                 }
             }
         });
@@ -102,7 +112,7 @@
             }
 
             // News Feed
-            let articles = [...document.body.querySelectorAll("article")];
+            let articles = [...document.body.querySelectorAll("article, div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3")];
             await Promise.all(articles.map(ProcessArticle));
 
             await Sleep(2000);
@@ -134,7 +144,7 @@
         }
 
         // Download post's image/video
-        let feedMenu = article.querySelector('section._aamu');
+        let feedMenu = article.querySelector('section._aamu, div.x11i5rnm.x1gryazu');
 
         if (feedMenu && !feedMenu.querySelector('.igpp_download')) {
             let newNode = document.createElement("div");
@@ -150,6 +160,12 @@
                 }
             });
             feedMenu.appendChild(newNode.firstChild);
+
+            // If menu bar is not section:
+            if (feedMenu.tagName !== "SECTION") {
+                feedMenu.style.display = "flex";
+                feedMenu.style.alignItems = "center";
+            }
         }
 
         // Report spam comments
@@ -211,8 +227,8 @@
 
         const dateDOM = article.querySelector("a[href^='/p/']");
         if (dateDOM) {
-            const linkR = CapturedMediaURLs.find(link => dateDOM.href.includes(link.postID));
-            console.log(dateDOM);
+            const postID = /\/p\/([a-z0-9-_]+)/i.exec(dateDOM.href)[1];
+            const linkR = CapturedMediaURLs[postID];
 
             if (linkR) {
                 if (mediaIndex === -1) {
@@ -228,13 +244,10 @@
     }
 
     const XHR_open = XMLHttpRequest.prototype.open;
+    const XHR_send = XMLHttpRequest.prototype.send;
 
-    // Overwrite the native method
+    // START - Overwrite XMLHttpRequest methods
     XMLHttpRequest.prototype.open = function () {
-        if (GM_getValue(STORAGE_VARS.BlockSeenStory) && arguments[1].includes("/stories/reel/seen")) {
-            return;
-        }
-
         this.addEventListener("load", event => {
             try {
                 let response = JSON.parse(event.target.responseText);
@@ -244,10 +257,13 @@
                         if (item.media_or_ad) {
                             ParseMediaObjFromAPI(item.media_or_ad);
                         }
+                        else if (item.explore_story) {
+                            ParseMediaObjFromAPI(item.explore_story.media_or_ad);
+                        }
                     });
                 }
                 else if (event.target.responseURL.includes("https://www.instagram.com/graphql/query/")) {
-                    const media = response.data.user?.edge_owner_to_timeline_media.edges;
+                    const media = response.data?.user?.edge_owner_to_timeline_media?.edges;
                     if (media) {
                         media.forEach(edge => ParseMediaObjFromGraphQL(edge.node));
                     }
@@ -270,17 +286,31 @@
                         }
                     });
                 }
-                else if (event.target.responseURL.includes("https://www.instagram.com/api/v1/media/")) {
-                    if (response.items && response.items[0]) {
-                        ParseMediaObjFromAPI(response.items[0]);
+                else if (event.target.responseURL.includes("https://www.instagram.com/api/v1/feed/user/")) {
+                    if (response.items) {
+                        response.items.forEach(item => ParseMediaObjFromAPI(item));
                     }
                 }
             }
-            catch { }
+            catch (err) {
+                if (!(err instanceof SyntaxError))
+                    console.error(err);
+            }
         }, false);
+
         // Call the stored reference to the native method
         XHR_open.apply(this, arguments);
     };
+
+    XMLHttpRequest.prototype.send = function () {
+        if (GM_getValue(STORAGE_VARS.BlockSeenStory) && typeof arguments[0] === 'string' && arguments[0].includes("PolarisAPIReelSeenMutation")) {
+            this.abort();
+            return;
+        }
+
+        XHR_send.apply(this, arguments);
+    };
+    // END - Overwrite XMLHttpRequest methods
 
     function ParseMediaObjFromGraphQL(media, save = true) {
         const postID = media.shortcode;
@@ -293,19 +323,19 @@
                 links.push(link.src);
             });
 
-            CapturedMediaURLs.push({ postID, srcs: links });
+            CapturedMediaURLs[postID] = { srcs: links };
         }
         else if (media.is_video) {
             let src = media.video_url;
             if (src) {
-                if (save) CapturedMediaURLs.push({ postID, src });
+                if (save) CapturedMediaURLs[postID] = { src };
                 return { postID, src };
             }
         }
         else if (media.__typename === "GraphImage") {
             let src = media.display_resources[media.display_resources.length - 1]?.src;
             if (src) {
-                if (save) CapturedMediaURLs.push({ postID, src });
+                if (save) CapturedMediaURLs[postID] = { src };
                 return { postID, src };
             }
         }
@@ -322,17 +352,17 @@
                 links.push(link.src);
             });
 
-            CapturedMediaURLs.push({ postID, srcs: links });
+            CapturedMediaURLs[postID] = { srcs: links };
         }
         else if (item.video_versions) {
             let src = item.video_versions[item.video_versions.length - 1].url;
-            if (save) CapturedMediaURLs.push({ postID, src });
-            return { postID, src };
+            if (save) CapturedMediaURLs[postID] = { src };
+            return { src };
         }
         else if (item.image_versions2) {
             let src = item.image_versions2.candidates[0].url;
-            if (save) CapturedMediaURLs.push({ postID, src });
-            return { postID, src };
+            if (save) CapturedMediaURLs[postID] = { src };
+            return { src };
         }
     }
 
