@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.5.5
+// @version      4.5.6
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -60,9 +60,20 @@
                     const items = content.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xdt_api__v1__media__shortcode__web_info.items;
                     items.forEach(item => ParseMediaObjFromAPI(item));
                 }
-                catch (ex) {
-                    console.error(ex);
+                catch (ex) { }
+            }
+            else if (script.innerHTML.includes("discover\\/web\\/explore_grid")) {
+                try {
+                    const content = JSON.parse(script.innerHTML);
+                    let response = content.require[0][3][0].__bbox.require[0][3][0].data.__bbox.result.response;
+                    response = JSON.parse(response);
+
+                    response.sectional_items.forEach(section => {
+                        section.layout_content.one_by_two_item?.clips?.items?.forEach(item => ParseMediaObjFromAPI(item.media));
+                        section.layout_content.fill_items?.forEach(item => ParseMediaObjFromAPI(item.media));
+                    });
                 }
+                catch (ex) { }
             }
         });
 
@@ -268,22 +279,10 @@
                         media.forEach(edge => ParseMediaObjFromGraphQL(edge.node));
                     }
                 }
-                else if (event.target.responseURL.includes("https://www.instagram.com/explore/grid/")) {
-                    let sections = response.sectional_items;
-
-                    sections.forEach(section => {
-                        if (section.layout_type === "media_grid") {
-                            section.layout_content.medias.forEach(media => ParseMediaObjFromAPI(media.media));
-                        }
-                        else if (section.layout_type.startsWith('two_by_two')) {
-                            if (section.layout_content.two_by_two_item.channel) {
-                                ParseMediaObjFromAPI(section.layout_content.two_by_two_item.channel.media);
-                            }
-                            else {
-                                ParseMediaObjFromAPI(section.layout_content.two_by_two_item.media);
-                            }
-                            section.layout_content.fill_items.forEach(item => ParseMediaObjFromAPI(item.media));
-                        }
+                else if (event.target.responseURL.includes("https://www.instagram.com/api/v1/discover/web/explore_grid/")) {
+                    response.sectional_items.forEach(section => {
+                        section.layout_content.one_by_two_item?.clips?.items?.forEach(item => ParseMediaObjFromAPI(item.media));
+                        section.layout_content.fill_items?.forEach(item => ParseMediaObjFromAPI(item.media));
                     });
                 }
                 else if (event.target.responseURL.includes("https://www.instagram.com/api/v1/feed/user/")) {
