@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.5.6
+// @version      4.6.0
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -10,6 +10,7 @@
 // @match        https://www.instagram.com/*
 // @match        https://static.ducng.dev/InstagramPP/
 // @require      https://cdn.jsdelivr.net/npm/js-cookie@latest/dist/js.cookie.min.js
+// @require      https://cdn.jsdelivr.net/gh/golang/go@go1.21.1/misc/wasm/wasm_exec.min.js
 // @run-at       document-start
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -27,14 +28,30 @@
         HideSponsoredPosts: "hide_sponsored_posts", RemoveBoldFont: "remove_bold_font",
         ReportedComments: "reported_comments", CheckedComments: "checked_comments"
     };
+
+    const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
+    const REPORT_EXPIRE_TIME = 604800000; // 1 week
+
     let CapturedMediaURLs = {};
     let ReportCommentsQueue = [];
-    const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
-    const REPORT_EXPIRE_TIME = 604800000;   // 1 week
 
     LoadSettings();
 
     window.addEventListener('load', () => {
+        // Loads IsCommentSpam WASM
+        let loadGoWasmInterval = 0;
+        loadGoWasmInterval = setInterval(() => {
+            if (window.Go) {
+                const go = new window.Go();
+                WebAssembly.instantiateStreaming(fetch("https://cdn.jsdelivr.net/gh/ducng99/is-comment-spam-wasm@1/is-comment-spam.wasm"), go.importObject).then((result) => {
+                    go.run(result.instance);
+                });
+
+                clearInterval(loadGoWasmInterval);
+            }
+        }, 1000);
+
+        // Begin main processing
         const AllScripts = document.querySelectorAll('script');
         AllScripts.forEach(script => {
             if (script.innerHTML.startsWith("window.__additionalDataLoaded")) {
@@ -182,8 +199,6 @@
         // Report spam comments
         if (GM_getValue(STORAGE_VARS.AutoReportSpamComments)) {
             const list_comments = article.querySelectorAll('ul._a9ym:not([igpp_checked]), ul._a9yo > div._aa06:not([igpp_checked])');
-            const toBeCheckedComments = {};
-            const IDsToElement = {};
             const reportedComments = GetReportedComments();
 
             list_comments.forEach(comment_container => {
@@ -191,26 +206,20 @@
                 const timeLink = comment_container.querySelector('a._a9zg._a6hd');
                 const match = /\/p\/[a-z0-9-_]+\/c\/(\d+)/i.exec(timeLink?.href);
 
-                if (commentText && timeLink && match) {
+                if (commentText && timeLink && match && match[1]) {
+                    const comment_id = match[1];
                     comment_container.setAttribute("igpp_checked", "");
 
-                    if (!(match[1] in reportedComments)) {
-                        toBeCheckedComments[match[1]] = commentText;
-                        IDsToElement[match[1]] = comment_container;
+                    if (!(comment_id in reportedComments)) {
+                        if (window.isCommentSpam(commentText)) {
+                            comment_container.remove();
+                            AddReportCommentID(comment_id);
+                        }
                     }
                     else {
                         comment_container.remove();
                     }
                 }
-            });
-
-            const checkedCommentsResult = await CheckSpamComments(toBeCheckedComments);
-
-            checkedCommentsResult.forEach(id => {
-                if (IDsToElement[id]) {
-                    IDsToElement[id].remove();
-                }
-                AddReportCommentID(id);
             });
         }
 
@@ -292,8 +301,9 @@
                 }
             }
             catch (err) {
-                if (!(err instanceof SyntaxError))
+                if (!(err instanceof SyntaxError)) {
                     console.error(err);
+                }
             }
         }, false);
 
@@ -383,29 +393,6 @@
         }
     }
 
-    async function CheckSpamComments(comments) {
-        if (Object.keys(comments).length > 0) {
-            try {
-                const res = await fetch("https://api.ducng.dev/func/IsInstaCommentSpam", {
-                    body: JSON.stringify(comments),
-                    method: 'POST'
-                });
-
-                if (res.ok) {
-                    return await res.json();
-                }
-
-                // if (res.status === 200)
-                //     return JSON.parse(res.responseText);
-            }
-            catch {
-                console.error("Failed to connect to check spam API");
-            }
-        }
-
-        return [];
-    }
-
     async function SendReport(comment_id) {
         const requestForm = new FormData;
         requestForm.append("entry_point", "1");
@@ -420,7 +407,7 @@
                 body: new URLSearchParams(requestForm),
                 method: 'POST',
                 headers: {
-                    "X-CSRFToken": Cookies.get('csrftoken'),
+                    "X-CSRFToken": window.Cookies.get('csrftoken'),
                     "X-Instagram-AJAX": unsafeWindow._sharedData.rollout_hash,
                     "X-IG-App-ID": 936619743392459
                 }
@@ -439,7 +426,7 @@
                     body: new URLSearchParams(reportForm),
                     method: 'POST',
                     headers: {
-                        "X-CSRFToken": Cookies.get('csrftoken'),
+                        "X-CSRFToken": window.Cookies.get('csrftoken'),
                         "X-Instagram-AJAX": unsafeWindow._sharedData.rollout_hash,
                         "X-IG-App-ID": 936619743392459
                     }
@@ -532,7 +519,7 @@
                 let response = await fetch(`https://www.instagram.com/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables=${variables}`, {
                     headers: {
                         "X-IG-App-ID": 936619743392459,
-                        "X-CSRFToken": Cookies.get('csrftoken'),
+                        "X-CSRFToken": window.Cookies.get('csrftoken'),
                     },
                     credentials: 'include'
                 });
