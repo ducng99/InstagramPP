@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.6.0
+// @version      4.6.1
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -16,7 +16,6 @@
 // @grant        GM_getValue
 // @grant        GM_addStyle
 // @grant        GM_registerMenuCommand
-// @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // ==/UserScript==
 
@@ -43,9 +42,9 @@
         loadGoWasmInterval = setInterval(() => {
             if (window.Go) {
                 const go = new window.Go();
-                WebAssembly.instantiateStreaming(fetch("https://cdn.jsdelivr.net/gh/ducng99/is-comment-spam-wasm@1/is-comment-spam.wasm"), go.importObject).then((result) => {
-                    go.run(result.instance);
-                });
+                WebAssembly.instantiateStreaming(fetch("https://is-comment-spam-wasm.pages.dev/is-comment-spam.wasm"), go.importObject)
+                    .then((result) => { go.run(result.instance); })
+                    .catch(err => { console.error(err); });
 
                 clearInterval(loadGoWasmInterval);
             }
@@ -54,33 +53,30 @@
         // Begin main processing
         const AllScripts = document.querySelectorAll('script');
         AllScripts.forEach(script => {
-            if (script.innerHTML.startsWith("window.__additionalDataLoaded")) {
-                let matches = /window\.__additionalDataLoaded\('.+',(.+)\);/.exec(script.innerHTML);
-                if (matches[1]) {
-                    if (matches[1].startsWith('{"items":')) {
-                        let media = JSON.parse(matches[1])?.items;
-                        if (media) {
-                            media.forEach(item => ParseMediaObjFromAPI(item));
+            try {
+                if (script.innerHTML.startsWith("window.__additionalDataLoaded")) {
+                    let matches = /window\.__additionalDataLoaded\('.+',(.+)\);/.exec(script.innerHTML);
+                    if (matches[1]) {
+                        if (matches[1].startsWith('{"items":')) {
+                            let media = JSON.parse(matches[1])?.items;
+                            if (media) {
+                                media.forEach(item => ParseMediaObjFromAPI(item));
+                            }
                         }
-                    }
-                    else if (matches[1].includes("feed_items")) {
-                        let feed_items = JSON.parse(matches[1])?.feed_items;
-                        if (feed_items) {
-                            feed_items.forEach(item => ParseMediaObjFromAPI(item.media_or_ad));
+                        else if (matches[1].includes("feed_items")) {
+                            let feed_items = JSON.parse(matches[1])?.feed_items;
+                            if (feed_items) {
+                                feed_items.forEach(item => ParseMediaObjFromAPI(item.media_or_ad));
+                            }
                         }
                     }
                 }
-            }
-            else if (script.innerHTML.includes("xdt_api__v1__media__shortcode__web_info")) {
-                try {
+                else if (script.innerHTML.includes("xdt_api__v1__media__shortcode__web_info")) {
                     const content = JSON.parse(script.innerHTML);
                     const items = content.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xdt_api__v1__media__shortcode__web_info.items;
                     items.forEach(item => ParseMediaObjFromAPI(item));
                 }
-                catch (ex) { }
-            }
-            else if (script.innerHTML.includes("discover\\/web\\/explore_grid")) {
-                try {
+                else if (script.innerHTML.includes("discover\\/web\\/explore_grid")) {
                     const content = JSON.parse(script.innerHTML);
                     let response = content.require[0][3][0].__bbox.require[0][3][0].data.__bbox.result.response;
                     response = JSON.parse(response);
@@ -90,8 +86,8 @@
                         section.layout_content.fill_items?.forEach(item => ParseMediaObjFromAPI(item.media));
                     });
                 }
-                catch (ex) { }
             }
+            catch (ex) { }
         });
 
         // Clear old reported comments
@@ -593,23 +589,6 @@
 
     function Sleep(time) {
         return new Promise(resolve => setTimeout(() => resolve(), time));
-    }
-
-    function gm_fetch(url, options) {
-        return new Promise((resolve, reject) => {
-            GM_xmlhttpRequest({
-                method: options.method || 'GET',
-                url: url,
-                headers: options.headers || {},
-                data: options.body || null,
-                anonymous: true,
-                onload: (res) => {
-                    if (res.status >= 200 && res.status < 300) resolve(res);
-                    else reject(res);
-                },
-                onerror: reject
-            });
-        });
     }
 
     GM_addStyle(`
