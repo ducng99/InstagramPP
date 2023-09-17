@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.6.1
+// @version      4.6.2
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -32,7 +32,7 @@
     const REPORT_EXPIRE_TIME = 604800000; // 1 week
 
     let CapturedMediaURLs = {};
-    let ReportCommentsQueue = [];
+    let ReportCommentsQueue = new Set();
 
     LoadSettings();
 
@@ -209,7 +209,7 @@
                     if (!(comment_id in reportedComments)) {
                         if (window.isCommentSpam(commentText)) {
                             comment_container.remove();
-                            AddReportCommentID(comment_id);
+                            ReportCommentsQueue.add(comment_id);
                         }
                     }
                     else {
@@ -375,14 +375,13 @@
 
     async function ReportLoop() {
         while (GM_getValue(STORAGE_VARS.AutoReportSpamComments, false)) {
-            const tmp_ReportCommentsQueue = [...ReportCommentsQueue];
-            for (let i = 0; i < tmp_ReportCommentsQueue.length; i++) {
-                const id = tmp_ReportCommentsQueue[i];
-                ReportCommentsQueue.splice(ReportCommentsQueue.indexOf(id), 1);
+            if (ReportCommentsQueue.size > 0) {
+                const [id] = ReportCommentsQueue;
+                ReportCommentsQueue.delete(id);
+
                 if (await SendReport(id)) {
                     AddReportedComment(id);
                 }
-                await Sleep(2000);
             }
 
             await Sleep(2000);
@@ -446,10 +445,6 @@
         }
 
         return false;
-    }
-
-    function AddReportCommentID(id) {
-        ReportCommentsQueue = [...new Set([...ReportCommentsQueue, id])];
     }
 
     function GetReportedComments() {
