@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.6.2
+// @version      4.6.3
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -24,8 +24,8 @@
 
     const STORAGE_VARS = {
         BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments", ShowHiddenLikesCount: "show_hidden_likes_count", DefaultVideoVolume: "default_video_volume",
-        HideSponsoredPosts: "hide_sponsored_posts", RemoveBoldFont: "remove_bold_font",
-        ReportedComments: "reported_comments", CheckedComments: "checked_comments"
+        HideSponsoredPosts: "hide_sponsored_posts", RemoveBoldFont: "remove_bold_font", EnlargeArticle: "enlarge_article",
+        ReportedComments: "reported_comments",
     };
 
     const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
@@ -102,6 +102,26 @@
 
         if (GM_getValue(STORAGE_VARS.RemoveBoldFont)) {
             GM_addStyle('._adda { font-weight: var(--font-weight-system-semibold) !important }');
+        }
+
+        // Enlarge news feed
+        if (GM_getValue(STORAGE_VARS.EnlargeArticle)) {
+            // News feed
+            GM_addStyle(`
+                div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.xh8yej3 {
+                    max-width: inherit !important;
+                }
+            `);
+
+            // Viewing single article
+            GM_addStyle(`
+                div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3 {
+                    max-width: inherit !important;
+                }
+                div:has(> div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3) {
+                    max-width: 95vh;
+                }
+            `);
         }
 
         MainLoop();
@@ -193,7 +213,7 @@
         }
 
         // Report spam comments
-        if (GM_getValue(STORAGE_VARS.AutoReportSpamComments)) {
+        if (GM_getValue(STORAGE_VARS.AutoReportSpamComments) && 'isCommentSpam' in window) {
             const list_comments = article.querySelectorAll('ul._a9ym:not([igpp_checked]), ul._a9yo > div._aa06:not([igpp_checked])');
             const reportedComments = GetReportedComments();
 
@@ -209,7 +229,7 @@
                     if (!(comment_id in reportedComments)) {
                         if (window.isCommentSpam(commentText)) {
                             comment_container.remove();
-                            ReportCommentsQueue.add(comment_id);
+                            AddReportCommentID(comment_id);
                         }
                     }
                     else {
@@ -555,6 +575,10 @@
             GM_setValue(STORAGE_VARS.HideSponsoredPosts, true);
         }
 
+        if (GM_getValue(STORAGE_VARS.EnlargeArticle, null) === null) {
+            GM_setValue(STORAGE_VARS.EnlargeArticle, false);
+        }
+
         if (GM_getValue(STORAGE_VARS.DefaultVideoVolume, null) === null) {
             GM_setValue(STORAGE_VARS.DefaultVideoVolume, 50);
         }
@@ -567,6 +591,7 @@
                 document.getElementById(STORAGE_VARS.ShowHiddenLikesCount).checked = GM_getValue(STORAGE_VARS.ShowHiddenLikesCount);
                 document.getElementById(STORAGE_VARS.HideSponsoredPosts).checked = GM_getValue(STORAGE_VARS.HideSponsoredPosts);
                 document.getElementById(STORAGE_VARS.RemoveBoldFont).checked = GM_getValue(STORAGE_VARS.RemoveBoldFont);
+                document.getElementById(STORAGE_VARS.EnlargeArticle).checked = GM_getValue(STORAGE_VARS.EnlargeArticle);
                 document.getElementById(STORAGE_VARS.DefaultVideoVolume).value = GM_getValue(STORAGE_VARS.DefaultVideoVolume);
 
                 document.querySelector("#save_settings").addEventListener('click', () => {
@@ -575,6 +600,7 @@
                     GM_setValue(STORAGE_VARS.ShowHiddenLikesCount, document.getElementById(STORAGE_VARS.ShowHiddenLikesCount).checked);
                     GM_setValue(STORAGE_VARS.HideSponsoredPosts, document.getElementById(STORAGE_VARS.HideSponsoredPosts).checked);
                     GM_setValue(STORAGE_VARS.RemoveBoldFont, document.getElementById(STORAGE_VARS.RemoveBoldFont).checked);
+                    GM_setValue(STORAGE_VARS.EnlargeArticle, document.getElementById(STORAGE_VARS.EnlargeArticle).checked);
                     GM_setValue(STORAGE_VARS.DefaultVideoVolume, document.getElementById(STORAGE_VARS.DefaultVideoVolume).value);
                 });
             });

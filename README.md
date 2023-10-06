@@ -4,8 +4,8 @@ A "powerful" tool provides enhanced features to Instagram web version
 
 ## Features
 
-- **Auto report spam comments** *(not 100%)*
-- **Hide spam comments** *(not 100%)*
+- **Auto report & hide spam comments** *(not 100%)*
+  - Uses closed-source WASM
 - Download stories
 - Download pictures and videos from posts
 - Download profile pic HD (or highest resolution possible)
@@ -14,6 +14,7 @@ A "powerful" tool provides enhanced features to Instagram web version
 - Set default volume for videos
 - Hide "Paid partnership with..." posts
 - Remove new bold font
+- Enlarge single article view and news feed
 
 ## Installation
 
