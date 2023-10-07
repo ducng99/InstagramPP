@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.6.3
+// @version      4.6.4
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -229,7 +229,7 @@
                     if (!(comment_id in reportedComments)) {
                         if (window.isCommentSpam(commentText)) {
                             comment_container.remove();
-                            AddReportCommentID(comment_id);
+                            ReportCommentsQueue.add(comment_id);
                         }
                     }
                     else {
