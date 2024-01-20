@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.6.4
+// @version      4.6.5
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -85,6 +85,12 @@
                         section.layout_content.one_by_two_item?.clips?.items?.forEach(item => ParseMediaObjFromAPI(item.media));
                         section.layout_content.fill_items?.forEach(item => ParseMediaObjFromAPI(item.media));
                     });
+                }
+                // Timeline feed initial script 2024-Jan-20
+                else if (script.innerHTML.includes("xdt_api__v1__feed__timeline__connection")) {
+                    const content = JSON.parse(script.innerHTML);
+                    const nodes = content.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xdt_api__v1__feed__timeline__connection.edges;
+                    nodes.forEach(node => ParseMediaObjFromAPI(node.node.media));
                 }
             }
             catch (ex) { }
@@ -313,6 +319,18 @@
                 else if (event.target.responseURL.includes("https://www.instagram.com/api/v1/feed/user/")) {
                     if (response.items) {
                         response.items.forEach(item => ParseMediaObjFromAPI(item));
+                    }
+                }
+                // Timeline feed 2024-Jan-20
+                else if (event.target.responseURL === "https://www.instagram.com/api/graphql") {
+                    if (response.data?.xdt_api__v1__feed__timeline__connection?.edges) {
+                        response.data.xdt_api__v1__feed__timeline__connection.edges.forEach(node => {
+                            if (node.node.media) {
+                                ParseMediaObjFromAPI(node.node.media);
+                            } else if (node.node.explore_story?.media) {
+                                ParseMediaObjFromAPI(node.node.explore_story.media);
+                            }
+                        });
                     }
                 }
             }
