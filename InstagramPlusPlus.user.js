@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.6.5
+// @version      4.7.0
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -9,13 +9,14 @@
 // @homepage     https://github.com/ducng99/InstagramPP
 // @match        https://www.instagram.com/*
 // @match        https://static.ducng.dev/InstagramPP/
-// @require      https://cdn.jsdelivr.net/npm/js-cookie@latest/dist/js.cookie.min.js
+// @require      https://cdn.jsdelivr.net/npm/js-cookie@3.0/dist/js.cookie.min.js
 // @require      https://cdn.jsdelivr.net/gh/golang/go@go1.21.1/misc/wasm/wasm_exec.min.js
 // @run-at       document-start
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addStyle
 // @grant        GM_registerMenuCommand
+// @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // ==/UserScript==
 
@@ -23,7 +24,7 @@
     "use strict"
 
     const STORAGE_VARS = {
-        BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments", ShowHiddenLikesCount: "show_hidden_likes_count", DefaultVideoVolume: "default_video_volume",
+        BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments", DefaultVideoVolume: "default_video_volume",
         HideSponsoredPosts: "hide_sponsored_posts", RemoveBoldFont: "remove_bold_font", EnlargeArticle: "enlarge_article",
         ReportedComments: "reported_comments",
     };
@@ -32,6 +33,7 @@
     const REPORT_EXPIRE_TIME = 604800000; // 1 week
 
     let CapturedMediaURLs = {};
+    let CapturedStoriesURLs = {};
     let ReportCommentsQueue = new Set();
 
     LoadSettings();
@@ -42,8 +44,9 @@
         loadGoWasmInterval = setInterval(() => {
             if (window.Go) {
                 const go = new window.Go();
-                WebAssembly.instantiateStreaming(fetch("https://is-comment-spam-wasm.pages.dev/is-comment-spam.wasm"), go.importObject)
-                    .then((result) => { go.run(result.instance); })
+                GetICSWasm()
+                    .then(wasmBuffer => WebAssembly.instantiate(wasmBuffer, go.importObject))
+                    .then(result => { go.run(result.instance); })
                     .catch(err => { console.error(err); });
 
                 clearInterval(loadGoWasmInterval);
@@ -140,7 +143,7 @@
             let storyMenu = document.body.querySelector("._ac0m");
             if (storyMenu && !storyMenu.querySelector('.igpp_download')) {
                 const newNode = document.createElement('div');
-                newNode.innerHTML = '<button class="_abl- igpp_download" type="button"><div class="_abm0"><svg width="18" height="18" fill="#ffffff" color="#ffffff" class="_ab6-" viewBox="0 0 16 16"><path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708z"/></svg></div></button>';
+                newNode.innerHTML = '<button class="igpp_download x1i10hfl x6umtig x1b1mbwd xaqea5y xav7gou x9f619 xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x16tdsg8 x1hl2dhg xggy1nq x1a2a7pz x6s0dn4 xjbqb8w x1ejq31n xd10rxx x1sy0etr x17r0tee x1ypdohk x78zum5 xl56j7k x1y1aw1k x1sxyh0 xwib8y2 xurb0ha xcdnw81" type="button"><div class="x6s0dn4 x78zum5 xdt5ytf xl56j7k"><svg width="18" height="18" fill="#ffffff" color="#ffffff" class="x1lliihq x1n2onr6 x9bdzbf" viewBox="0 0 16 16" aria-label="Download"><path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708z"/></svg></div></button>';
                 const downloadButton = newNode.firstChild;
                 downloadButton.addEventListener('click', DownloadStory);
                 storyMenu.insertBefore(downloadButton, storyMenu.firstChild);
@@ -170,17 +173,18 @@
     }
 
     function DownloadStory() {
-        let stPicLink = document.body.querySelector("img._aa63")?.getAttribute("srcset")?.split(" ")[0];
-        let stVidLink = document.body.querySelector("video._aa63._ac3u")?.querySelector("source")?.getAttribute("src");
+        const storyID = /stories\/[a-z0-9\-_]+\/(\d+)/i.exec(window.location.href)[1];
 
-        if (stVidLink) {
-            window.open(stVidLink, '_blank');
-        }
-        else if (stPicLink) {
-            window.open(stPicLink, '_blank');
-        }
-        else {
-            alert('Error: Cannot Find the link');
+        if (storyID) {
+            const link = CapturedStoriesURLs[storyID];
+
+            if (link?.src) {
+                window.open(link.src, "_blank");
+            } else {
+                alert("Cannot get the link");
+            }
+        } else {
+            alert("Cannot get story ID");
         }
     }
 
@@ -243,18 +247,6 @@
                     }
                 }
             });
-        }
-
-        // Show hidden likes count
-        if (GM_getValue(STORAGE_VARS.ShowHiddenLikesCount)) {
-            const likesCountURLDOM = article.querySelector("div._ab9m._ab9r._aba-._abbg._abby._abce a[href$='/liked_by/']");
-            const likesCountDOM = likesCountURLDOM?.querySelector("div._aacl._aaco._aacw._aacx._aada._aade:not([igpp_checked])");
-
-            if (likesCountDOM && !/[0-9.,]+/.test(likesCountDOM.textContent)) {
-                const shortcode = likesCountURLDOM?.href.split("/")[4];
-
-                await GetLikesCount(shortcode, likesCountDOM);
-            }
         }
     }
 
@@ -333,6 +325,15 @@
                         });
                     }
                 }
+                // Stories/reels 2024-Jan-25
+                else if (event.target.responseURL.includes("https://www.instagram.com/api/v1/feed/reels_media")) {
+                    if (response.reels) {
+                        const reels = Object.values(response.reels);
+
+                        reels.forEach(reel => reel.items.forEach(ParseStoryMediaObjFromAPI));
+                        response.reels_media.forEach(reel => reel.items.forEach(ParseStoryMediaObjFromAPI));
+                    }
+                }
             }
             catch (err) {
                 if (!(err instanceof SyntaxError)) {
@@ -409,7 +410,36 @@
         }
     }
 
+    function ParseStoryMediaObjFromAPI(item) {
+        const storyID = item.pk ?? "";
+
+        if (item.video_versions) {
+            let src = item.video_versions[item.video_versions.length - 1].url;
+            CapturedStoriesURLs[storyID] = { src };
+        }
+        else if (item.image_versions2) {
+            let src = item.image_versions2.candidates[0].url;
+            CapturedStoriesURLs[storyID] = { src };
+        }
+    }
+
     /* START - REPORT SPAM SECTION */
+
+    function GetICSWasm() {
+        return new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: "https://is-comment-spam-wasm.pages.dev/is-comment-spam.wasm",
+                responseType: "arraybuffer",
+                onload: function (response) {
+                    resolve(response.response);
+                },
+                onerror: function (err) {
+                    reject(err);
+                }
+            });
+        });
+    }
 
     async function ReportLoop() {
         while (GM_getValue(STORAGE_VARS.AutoReportSpamComments, false)) {
@@ -538,39 +568,6 @@
     }
     /* END - DOWNLOAD PROFILE PIC SECTION */
 
-    /* START - GET LIKES COUNT */
-    async function GetLikesCount(shortcode, likesCountDOM) {
-        if (!likesCountDOM.hasAttribute("igpp_last_checked") || Number.parseInt(likesCountDOM.getAttribute("igpp_last_checked")) + 5000 > Date.now()) {
-            likesCountDOM.setAttribute("igpp_last_checked", Date.now());
-            const variables = JSON.stringify({ shortcode, include_reel: false, first: 0 });
-
-            try {
-                let response = await fetch(`https://www.instagram.com/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables=${variables}`, {
-                    headers: {
-                        "X-IG-App-ID": 936619743392459,
-                        "X-CSRFToken": window.Cookies.get('csrftoken'),
-                    },
-                    credentials: 'include'
-                });
-
-                response = await response.json();
-
-                if (response?.data?.shortcode_media?.edge_liked_by?.count) {
-                    let count = response.data.shortcode_media.edge_liked_by.count;
-
-                    let numberDOM = document.createElement("span");
-                    numberDOM.innerText = count.toLocaleString() + " ";
-                    likesCountDOM.insertBefore(numberDOM, likesCountDOM.firstChild);
-                    likesCountDOM.setAttribute("igpp_checked", "");
-                }
-            }
-            catch (ex) {
-                console.error(ex);
-            }
-        }
-    }
-    /* END - GET LIKES COUNT */
-
     /* START - SETTINGS SECTION */
     // Open settings page
     GM_registerMenuCommand("Settings", () => window.open(SETTINGS_PAGE, "_blank"));
@@ -583,10 +580,6 @@
 
         if (GM_getValue(STORAGE_VARS.AutoReportSpamComments, null) === null) {
             GM_setValue(STORAGE_VARS.AutoReportSpamComments, true);
-        }
-
-        if (GM_getValue(STORAGE_VARS.ShowHiddenLikesCount, null) === null) {
-            GM_setValue(STORAGE_VARS.ShowHiddenLikesCount, true);
         }
 
         if (GM_getValue(STORAGE_VARS.HideSponsoredPosts, null) === null) {
@@ -606,7 +599,6 @@
             window.addEventListener('load', () => {
                 document.getElementById(STORAGE_VARS.BlockSeenStory).checked = GM_getValue(STORAGE_VARS.BlockSeenStory);
                 document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked = GM_getValue(STORAGE_VARS.AutoReportSpamComments);
-                document.getElementById(STORAGE_VARS.ShowHiddenLikesCount).checked = GM_getValue(STORAGE_VARS.ShowHiddenLikesCount);
                 document.getElementById(STORAGE_VARS.HideSponsoredPosts).checked = GM_getValue(STORAGE_VARS.HideSponsoredPosts);
                 document.getElementById(STORAGE_VARS.RemoveBoldFont).checked = GM_getValue(STORAGE_VARS.RemoveBoldFont);
                 document.getElementById(STORAGE_VARS.EnlargeArticle).checked = GM_getValue(STORAGE_VARS.EnlargeArticle);
@@ -615,7 +607,6 @@
                 document.querySelector("#save_settings").addEventListener('click', () => {
                     GM_setValue(STORAGE_VARS.BlockSeenStory, document.getElementById(STORAGE_VARS.BlockSeenStory).checked);
                     GM_setValue(STORAGE_VARS.AutoReportSpamComments, document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked);
-                    GM_setValue(STORAGE_VARS.ShowHiddenLikesCount, document.getElementById(STORAGE_VARS.ShowHiddenLikesCount).checked);
                     GM_setValue(STORAGE_VARS.HideSponsoredPosts, document.getElementById(STORAGE_VARS.HideSponsoredPosts).checked);
                     GM_setValue(STORAGE_VARS.RemoveBoldFont, document.getElementById(STORAGE_VARS.RemoveBoldFont).checked);
                     GM_setValue(STORAGE_VARS.EnlargeArticle, document.getElementById(STORAGE_VARS.EnlargeArticle).checked);

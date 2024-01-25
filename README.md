@@ -10,7 +10,6 @@ A "powerful" tool provides enhanced features to Instagram web version
 - Download pictures and videos from posts
 - Download profile pic HD (or highest resolution possible)
 - Block 'seen' stories (watch stories in private)
-- Show hidden likes count
 - Set default volume for videos
 - Hide "Paid partnership with..." posts
 - Remove new bold font
