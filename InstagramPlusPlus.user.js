@@ -591,6 +591,10 @@
             GM_setValue(STORAGE_VARS.HideSponsoredPosts, true);
         }
 
+        if (GM_getValue(STORAGE_VARS.RemoveBoldFont, null) === null) {
+            GM_setValue(STORAGE_VARS.RemoveBoldFont, false);
+        }
+
         if (GM_getValue(STORAGE_VARS.EnlargeArticle, null) === null) {
             GM_setValue(STORAGE_VARS.EnlargeArticle, false);
         }
@@ -600,7 +604,7 @@
         }
 
         // Setup settings page
-        if (window.location.href.includes(SETTINGS_PAGE)) {
+        if (window.location.href.startsWith(SETTINGS_PAGE)) {
             window.addEventListener('load', () => {
                 document.getElementById(STORAGE_VARS.BlockSeenStory).checked = GM_getValue(STORAGE_VARS.BlockSeenStory);
                 document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked = GM_getValue(STORAGE_VARS.AutoReportSpamComments);
