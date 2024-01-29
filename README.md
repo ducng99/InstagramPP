@@ -12,7 +12,6 @@ A "powerful" tool provides enhanced features to Instagram web version
 - Block 'seen' stories (watch stories in private)
 - Set default volume for videos
 - Hide "Paid partnership with..." posts
-- Remove new bold font
 - Enlarge single article view and news feed
 
 ## Installation

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.8.2
+// @version      4.8.3
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -109,10 +109,6 @@
 
         GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(reportedComments));
 
-        if (GM_getValue(STORAGE_VARS.RemoveBoldFont)) {
-            GM_addStyle('._adda { font-weight: var(--font-weight-system-semibold) !important }');
-        }
-
         // Enlarge news feed
         if (GM_getValue(STORAGE_VARS.EnlargeArticle)) {
             // News feed
@@ -158,8 +154,8 @@
                 storyMenu.insertBefore(downloadButton, storyMenu.firstChild);
             }
 
-            // Video
-            document.body.querySelectorAll('video.tWeCl:not([igpp_checked])').forEach(video => {
+            // Video volume adjust
+            document.body.querySelectorAll('video.x1lliihq.x5yr21d.xh8yej3:not([igpp_checked])').forEach(video => {
                 if (video) {
                     video.setAttribute("igpp_checked", "");
                     video.volume = GM_getValue(STORAGE_VARS.DefaultVideoVolume / 100, 0.5);
@@ -634,10 +630,6 @@
                     hideSponsoredPostsElement.checked = GM_getValue(STORAGE_VARS.HideSponsoredPosts);
                 }
 
-                if (removeBoldFontElement) {
-                    removeBoldFontElement.checked = GM_getValue(STORAGE_VARS.RemoveBoldFont);
-                }
-
                 if (enlargeArticleElement) {
                     enlargeArticleElement.checked = GM_getValue(STORAGE_VARS.EnlargeArticle);
                 }
@@ -655,9 +647,6 @@
                     }
                     if (hideSponsoredPostsElement) {
                         GM_setValue(STORAGE_VARS.HideSponsoredPosts, hideSponsoredPostsElement.checked);
-                    }
-                    if (removeBoldFontElement) {
-                        GM_setValue(STORAGE_VARS.RemoveBoldFont, removeBoldFontElement.checked);
                     }
                     if (enlargeArticleElement) {
                         GM_setValue(STORAGE_VARS.EnlargeArticle, enlargeArticleElement.checked);
