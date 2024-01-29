@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.8.0
+// @version      4.8.2
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -117,8 +117,17 @@
         if (GM_getValue(STORAGE_VARS.EnlargeArticle)) {
             // News feed
             GM_addStyle(`
-                div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.xh8yej3 {
+                div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 {
                     max-width: inherit !important;
+                    width: 100% !important;
+                }
+                
+                div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf {
+                    min-width: 100%;
+                }
+                
+                div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf > div {
+                    width: 100% !important;
                 }
             `);
 
@@ -606,20 +615,56 @@
         // Setup settings page
         if (window.location.href.startsWith(SETTINGS_PAGE)) {
             window.addEventListener('load', () => {
-                document.getElementById(STORAGE_VARS.BlockSeenStory).checked = GM_getValue(STORAGE_VARS.BlockSeenStory);
-                document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked = GM_getValue(STORAGE_VARS.AutoReportSpamComments);
-                document.getElementById(STORAGE_VARS.HideSponsoredPosts).checked = GM_getValue(STORAGE_VARS.HideSponsoredPosts);
-                document.getElementById(STORAGE_VARS.RemoveBoldFont).checked = GM_getValue(STORAGE_VARS.RemoveBoldFont);
-                document.getElementById(STORAGE_VARS.EnlargeArticle).checked = GM_getValue(STORAGE_VARS.EnlargeArticle);
-                document.getElementById(STORAGE_VARS.DefaultVideoVolume).value = GM_getValue(STORAGE_VARS.DefaultVideoVolume);
+                const blockSeenStoryElement = document.getElementById(STORAGE_VARS.BlockSeenStory);
+                const autoReportSpamCommentsElement = document.getElementById(STORAGE_VARS.AutoReportSpamComments);
+                const hideSponsoredPostsElement = document.getElementById(STORAGE_VARS.HideSponsoredPosts);
+                const removeBoldFontElement = document.getElementById(STORAGE_VARS.RemoveBoldFont);
+                const enlargeArticleElement = document.getElementById(STORAGE_VARS.EnlargeArticle);
+                const defaultVideoVolumeElement = document.getElementById(STORAGE_VARS.DefaultVideoVolume);
 
-                document.querySelector("#save_settings").addEventListener('click', () => {
-                    GM_setValue(STORAGE_VARS.BlockSeenStory, document.getElementById(STORAGE_VARS.BlockSeenStory).checked);
-                    GM_setValue(STORAGE_VARS.AutoReportSpamComments, document.getElementById(STORAGE_VARS.AutoReportSpamComments).checked);
-                    GM_setValue(STORAGE_VARS.HideSponsoredPosts, document.getElementById(STORAGE_VARS.HideSponsoredPosts).checked);
-                    GM_setValue(STORAGE_VARS.RemoveBoldFont, document.getElementById(STORAGE_VARS.RemoveBoldFont).checked);
-                    GM_setValue(STORAGE_VARS.EnlargeArticle, document.getElementById(STORAGE_VARS.EnlargeArticle).checked);
-                    GM_setValue(STORAGE_VARS.DefaultVideoVolume, document.getElementById(STORAGE_VARS.DefaultVideoVolume).value);
+                if (blockSeenStoryElement) {
+                    blockSeenStoryElement.checked = GM_getValue(STORAGE_VARS.BlockSeenStory);
+                }
+
+                if (autoReportSpamCommentsElement) {
+                    autoReportSpamCommentsElement.checked = GM_getValue(STORAGE_VARS.AutoReportSpamComments);
+                }
+
+                if (hideSponsoredPostsElement) {
+                    hideSponsoredPostsElement.checked = GM_getValue(STORAGE_VARS.HideSponsoredPosts);
+                }
+
+                if (removeBoldFontElement) {
+                    removeBoldFontElement.checked = GM_getValue(STORAGE_VARS.RemoveBoldFont);
+                }
+
+                if (enlargeArticleElement) {
+                    enlargeArticleElement.checked = GM_getValue(STORAGE_VARS.EnlargeArticle);
+                }
+
+                if (defaultVideoVolumeElement) {
+                    defaultVideoVolumeElement.value = GM_getValue(STORAGE_VARS.DefaultVideoVolume);
+                }
+
+                document.getElementById("save_settings")?.addEventListener('click', () => {
+                    if (blockSeenStoryElement) {
+                        GM_setValue(STORAGE_VARS.BlockSeenStory, blockSeenStoryElement.checked);
+                    }
+                    if (autoReportSpamCommentsElement) {
+                        GM_setValue(STORAGE_VARS.AutoReportSpamComments, autoReportSpamCommentsElement.checked);
+                    }
+                    if (hideSponsoredPostsElement) {
+                        GM_setValue(STORAGE_VARS.HideSponsoredPosts, hideSponsoredPostsElement.checked);
+                    }
+                    if (removeBoldFontElement) {
+                        GM_setValue(STORAGE_VARS.RemoveBoldFont, removeBoldFontElement.checked);
+                    }
+                    if (enlargeArticleElement) {
+                        GM_setValue(STORAGE_VARS.EnlargeArticle, enlargeArticleElement.checked);
+                    }
+                    if (defaultVideoVolumeElement) {
+                        GM_setValue(STORAGE_VARS.DefaultVideoVolume, defaultVideoVolumeElement.value);
+                    }
                 });
             });
         }
