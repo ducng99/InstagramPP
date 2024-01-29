@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.7.0
+// @version      4.8.0
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -10,7 +10,7 @@
 // @match        https://www.instagram.com/*
 // @match        https://static.ducng.dev/InstagramPP/
 // @require      https://cdn.jsdelivr.net/npm/js-cookie@3.0/dist/js.cookie.min.js
-// @require      https://cdn.jsdelivr.net/gh/golang/go@go1.21.1/misc/wasm/wasm_exec.min.js
+// @require      https://cdn.jsdelivr.net/gh/golang/go@go1.21.6/misc/wasm/wasm_exec.min.js
 // @run-at       document-start
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -137,8 +137,8 @@
         ReportLoop();
     });
 
-    async function MainLoop() {
-        while (true) {
+    function MainLoop() {
+        const loop = () => {
             // Story
             let storyMenu = document.body.querySelector("._ac0m");
             if (storyMenu && !storyMenu.querySelector('.igpp_download')) {
@@ -150,7 +150,7 @@
             }
 
             // Video
-            [...document.body.querySelectorAll('video.tWeCl:not([igpp_checked])')].forEach(video => {
+            document.body.querySelectorAll('video.tWeCl:not([igpp_checked])').forEach(video => {
                 if (video) {
                     video.setAttribute("igpp_checked", "");
                     video.volume = GM_getValue(STORAGE_VARS.DefaultVideoVolume / 100, 0.5);
@@ -160,23 +160,23 @@
             // Profile pic
             let profilePicContainer = document.body.querySelector('div.x9ozhqo.x9ozhqo ._aarf:not([igpp_checked])');
             if (profilePicContainer) {
-                await ProcessProfilePic(profilePicContainer.parentElement);
-                profilePicContainer.setAttribute("igpp_checked", "");
+                ProcessProfilePic(profilePicContainer.parentElement).then(() => profilePicContainer.setAttribute("igpp_checked", ""));
             }
 
             // News Feed
-            let articles = [...document.body.querySelectorAll("article, div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3")];
-            await Promise.all(articles.map(ProcessArticle));
+            let articles = document.body.querySelectorAll("article, div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3");
+            articles.forEach(ProcessArticle);
+        };
 
-            await Sleep(2000);
-        }
+        setInterval(loop, 2000);
+        loop();
     }
 
     function DownloadStory() {
-        const storyID = /stories\/[a-z0-9\-_]+\/(\d+)/i.exec(window.location.href)[1];
+        const storyID = /stories\/[a-z0-9._]+\/(\d+)/i.exec(window.location.href);
 
-        if (storyID) {
-            const link = CapturedStoriesURLs[storyID];
+        if (storyID && storyID.length > 1) {
+            const link = CapturedStoriesURLs[storyID[1]];
 
             if (link?.src) {
                 window.open(link.src, "_blank");
@@ -188,7 +188,7 @@
         }
     }
 
-    async function ProcessArticle(article) {
+    function ProcessArticle(article) {
         // Hide sponsored posts
         if (GM_getValue(STORAGE_VARS.HideSponsoredPosts)) {
             if (article.querySelector('header span.x5n08af.x1pg5gke.x132q4wb')) {
@@ -202,7 +202,7 @@
 
         if (feedMenu && !feedMenu.querySelector('.igpp_download')) {
             let newNode = document.createElement("div");
-            newNode.innerHTML = `<span class="igpp_download"><div><div aria-disabled="false" role="button" style="cursor: pointer;" tabindex="0"><button class="_abl-" type="button"><div class="_abm0"><svg class="_ab6-" role="img" width="24" height="24" viewBox="0 0 16 16" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></div></button></div></div></span>`;
+            newNode.innerHTML = `<span class="igpp_download"><div><div aria-disabled="false" role="button" style="cursor: pointer;" tabindex="0"><button class="_abl-" type="button"><div class="_abm0"><svg class="x1lliihq x1n2onr6 x5n08af" fill="currentColor" role="img" width="24" height="24" viewBox="0 0 16 16" aria-label="Download"><path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg></div></button></div></div></span>`;
             newNode.firstChild.addEventListener('click', () => {
                 let src = GetMediaSrc(article);
 
@@ -210,7 +210,7 @@
                     window.open(src, "_blank");
                 }
                 else {
-                    alert('Error: Cannot Find the link');
+                    alert('Error: Cannot find the link');
                 }
             });
             feedMenu.appendChild(newNode.firstChild);
@@ -286,6 +286,7 @@
             try {
                 let response = JSON.parse(event.target.responseText);
 
+                // Timeline feed 2022-Dec-17
                 if (event.target.responseURL === "https://www.instagram.com/api/v1/feed/timeline/") {
                     response.feed_items.forEach(item => {
                         if (item.media_or_ad) {
@@ -296,19 +297,22 @@
                         }
                     });
                 }
-                else if (event.target.responseURL.includes("https://www.instagram.com/graphql/query/")) {
+                // Timeline feed 2022-Apr-21
+                else if (event.target.responseURL.startsWith("https://www.instagram.com/graphql/query/")) {
                     const media = response.data?.user?.edge_owner_to_timeline_media?.edges;
                     if (media) {
                         media.forEach(edge => ParseMediaObjFromGraphQL(edge.node));
                     }
                 }
-                else if (event.target.responseURL.includes("https://www.instagram.com/api/v1/discover/web/explore_grid/")) {
+                // Explore page 2023-Aug-20
+                else if (event.target.responseURL.startsWith("https://www.instagram.com/api/v1/discover/web/explore_grid/")) {
                     response.sectional_items.forEach(section => {
                         section.layout_content.one_by_two_item?.clips?.items?.forEach(item => ParseMediaObjFromAPI(item.media));
                         section.layout_content.fill_items?.forEach(item => ParseMediaObjFromAPI(item.media));
                     });
                 }
-                else if (event.target.responseURL.includes("https://www.instagram.com/api/v1/feed/user/")) {
+                // Profile page 2023-Aug-20
+                else if (event.target.responseURL.startsWith("https://www.instagram.com/api/v1/feed/user/")) {
                     if (response.items) {
                         response.items.forEach(item => ParseMediaObjFromAPI(item));
                     }
@@ -326,11 +330,8 @@
                     }
                 }
                 // Stories/reels 2024-Jan-25
-                else if (event.target.responseURL.includes("https://www.instagram.com/api/v1/feed/reels_media")) {
-                    if (response.reels) {
-                        const reels = Object.values(response.reels);
-
-                        reels.forEach(reel => reel.items.forEach(ParseStoryMediaObjFromAPI));
+                else if (event.target.responseURL.startsWith("https://www.instagram.com/api/v1/feed/reels_media")) {
+                    if (Array.isArray(response.reels_media)) {
                         response.reels_media.forEach(reel => reel.items.forEach(ParseStoryMediaObjFromAPI));
                     }
                 }
@@ -429,7 +430,7 @@
         return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 method: "GET",
-                url: "https://is-comment-spam-wasm.pages.dev/is-comment-spam.wasm",
+                url: "https://github.com/ducng99/is-comment-spam-wasm/releases/latest/download/is-comment-spam.wasm",
                 responseType: "arraybuffer",
                 onload: function (response) {
                     resolve(response.response);
@@ -441,19 +442,23 @@
         });
     }
 
-    async function ReportLoop() {
-        while (GM_getValue(STORAGE_VARS.AutoReportSpamComments, false)) {
-            if (ReportCommentsQueue.size > 0) {
-                const [id] = ReportCommentsQueue;
-                ReportCommentsQueue.delete(id);
+    function ReportLoop() {
+        const loopId = setInterval(() => {
+            if (GM_getValue(STORAGE_VARS.AutoReportSpamComments, false)) {
+                if (ReportCommentsQueue.size > 0) {
+                    const [id] = ReportCommentsQueue;
+                    ReportCommentsQueue.delete(id);
 
-                if (await SendReport(id)) {
-                    AddReportedComment(id);
+                    SendReport(id).then(ok => {
+                        if (ok) {
+                            AddReportedComment(id);
+                        }
+                    });
                 }
+            } else {
+                clearInterval(loopId);
             }
-
-            await Sleep(2000);
-        }
+        }, 2000);
     }
 
     async function SendReport(comment_id) {
@@ -616,22 +621,4 @@
         }
     }
     /* END - SETTINGS SECTION */
-
-    function Sleep(time) {
-        return new Promise(resolve => setTimeout(() => resolve(), time));
-    }
-
-    GM_addStyle(`
-html._aa4d .igpp_download svg {
-    fill: #fafafa;
-}
-
-html._aa4c .igpp_download svg {
-    fill: #262626;
-}
-
-.igpp_download svg:hover {
-    fill: #8e8e8e !important;
-}
-    `);
 })();
