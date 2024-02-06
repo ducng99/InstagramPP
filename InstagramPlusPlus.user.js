@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.8.3
+// @version      4.8.4
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -25,7 +25,7 @@
 
     const STORAGE_VARS = {
         BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments", DefaultVideoVolume: "default_video_volume",
-        HideSponsoredPosts: "hide_sponsored_posts", RemoveBoldFont: "remove_bold_font", EnlargeArticle: "enlarge_article",
+        HideSponsoredPosts: "hide_sponsored_posts", EnlargeArticle: "enlarge_article",
         ReportedComments: "reported_comments",
     };
 
@@ -38,24 +38,13 @@
 
     LoadSettings();
 
-    window.addEventListener('load', () => {
-        // Loads IsCommentSpam WASM
-        let loadGoWasmInterval = 0;
-        loadGoWasmInterval = setInterval(() => {
-            if (window.Go) {
-                const go = new window.Go();
-                GetICSWasm()
-                    .then(wasmBuffer => WebAssembly.instantiate(wasmBuffer, go.importObject))
-                    .then(result => { go.run(result.instance); })
-                    .catch(err => { console.error(err); });
+    // Loads IsCommentSpam WASM
+    LoadIsCommentSpam();
 
-                clearInterval(loadGoWasmInterval);
-            }
-        }, 1000);
-
-        // Begin main processing
-        const AllScripts = document.querySelectorAll('script');
-        AllScripts.forEach(script => {
+    window.addEventListener('DOMContentLoaded', () => {
+        // Handle initial scripts/data for articles
+        const initialScripts = document.body.querySelectorAll("script");
+        initialScripts.forEach(script => {
             try {
                 if (script.innerHTML.startsWith("window.__additionalDataLoaded")) {
                     let matches = /window\.__additionalDataLoaded\('.+',(.+)\);/.exec(script.innerHTML);
@@ -93,54 +82,63 @@
                 else if (script.innerHTML.includes("xdt_api__v1__feed__timeline__connection")) {
                     const content = JSON.parse(script.innerHTML);
                     const nodes = content.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xdt_api__v1__feed__timeline__connection.edges;
-                    nodes.forEach(node => ParseMediaObjFromAPI(node.node.media));
+                    nodes.forEach(node => {
+                        if (node.node.media) {
+                            ParseMediaObjFromAPI(node.node.media);
+                        } else if (node.node.explore_story?.media) {
+                            // "Suggested for you" articles
+                            ParseMediaObjFromAPI(node.node.explore_story.media);
+                        }
+                    });
                 }
             }
-            catch (ex) { }
-        });
-
-        // Clear old reported comments
-        const reportedComments = GetReportedComments();
-        Object.entries(reportedComments).forEach(([key, value]) => {
-            if (value < Date.now() - REPORT_EXPIRE_TIME) {
-                delete reportedComments[key];
+            catch (ex) {
+                console.error(ex);
             }
         });
-
-        GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(reportedComments));
-
-        // Enlarge news feed
-        if (GM_getValue(STORAGE_VARS.EnlargeArticle)) {
-            // News feed
-            GM_addStyle(`
-                div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 {
-                    max-width: inherit !important;
-                    width: 100% !important;
-                }
-                
-                div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf {
-                    min-width: 100%;
-                }
-                
-                div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf > div {
-                    width: 100% !important;
-                }
-            `);
-
-            // Viewing single article
-            GM_addStyle(`
-                div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3 {
-                    max-width: inherit !important;
-                }
-                div:has(> div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3) {
-                    max-width: 95vh;
-                }
-            `);
-        }
 
         MainLoop();
         ReportLoop();
     });
+
+    // Clear old reported comments
+    const reportedComments = GetReportedComments();
+    Object.entries(reportedComments).forEach(([key, value]) => {
+        if (value < Date.now() - REPORT_EXPIRE_TIME) {
+            delete reportedComments[key];
+        }
+    });
+
+    GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(reportedComments));
+
+    // Enlarge news feed
+    if (GM_getValue(STORAGE_VARS.EnlargeArticle)) {
+        // News feed
+        GM_addStyle(`
+            div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 {
+                max-width: inherit !important;
+                width: 100% !important;
+            }
+            
+            div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf {
+                min-width: 100%;
+            }
+            
+            div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf > div {
+                width: 100% !important;
+            }
+        `);
+
+        // Viewing single article
+        GM_addStyle(`
+            div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3 {
+                max-width: inherit !important;
+            }
+            div:has(> div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3) {
+                max-width: 95vh;
+            }
+        `);
+    }
 
     function MainLoop() {
         const loop = () => {
@@ -169,7 +167,10 @@
             }
 
             // News Feed
-            let articles = document.body.querySelectorAll("article, div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3");
+            // article: a long long time ago
+            // div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3 - Viewing article single page - 2024-Jan-29
+            // #media-root - Viewing article w/ popup viewer - 2024-Feb-6
+            let articles = document.body.querySelectorAll("article, div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xkrivgy.xat24cr.x1gryazu.x1n2onr6.xh8yej3, #media-root");
             articles.forEach(ProcessArticle);
         };
 
@@ -322,8 +323,8 @@
                         response.items.forEach(item => ParseMediaObjFromAPI(item));
                     }
                 }
-                // Timeline feed 2024-Jan-20
                 else if (event.target.responseURL === "https://www.instagram.com/api/graphql") {
+                    // Timeline feed 2024-Jan-20
                     if (response.data?.xdt_api__v1__feed__timeline__connection?.edges) {
                         response.data.xdt_api__v1__feed__timeline__connection.edges.forEach(node => {
                             if (node.node.media) {
@@ -332,6 +333,10 @@
                                 ParseMediaObjFromAPI(node.node.explore_story.media);
                             }
                         });
+                    }
+                    // Article popup viewer (explore) 2024-Feb-6
+                    else if (response.data?.xdt_api__v1__media__shortcode__web_info?.items) {
+                        response.data.xdt_api__v1__media__shortcode__web_info.items.forEach(item => ParseMediaObjFromAPI(item));
                     }
                 }
                 // Stories/reels 2024-Jan-25
@@ -430,6 +435,20 @@
     }
 
     /* START - REPORT SPAM SECTION */
+    function LoadIsCommentSpam() {
+        let loadGoWasmInterval = 0;
+        loadGoWasmInterval = setInterval(() => {
+            if (window.Go) {
+                clearInterval(loadGoWasmInterval);
+
+                const go = new window.Go();
+                GetICSWasm()
+                    .then(wasmBuffer => WebAssembly.instantiate(wasmBuffer, go.importObject))
+                    .then(result => { go.run(result.instance); })
+                    .catch(err => { console.error(err); });
+            }
+        }, 1000);
+    }
 
     function GetICSWasm() {
         return new Promise((resolve, reject) => {
@@ -614,7 +633,6 @@
                 const blockSeenStoryElement = document.getElementById(STORAGE_VARS.BlockSeenStory);
                 const autoReportSpamCommentsElement = document.getElementById(STORAGE_VARS.AutoReportSpamComments);
                 const hideSponsoredPostsElement = document.getElementById(STORAGE_VARS.HideSponsoredPosts);
-                const removeBoldFontElement = document.getElementById(STORAGE_VARS.RemoveBoldFont);
                 const enlargeArticleElement = document.getElementById(STORAGE_VARS.EnlargeArticle);
                 const defaultVideoVolumeElement = document.getElementById(STORAGE_VARS.DefaultVideoVolume);
 
