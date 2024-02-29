@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.8.4
+// @version      4.8.5
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -119,12 +119,16 @@
                 max-width: inherit !important;
                 width: 100% !important;
             }
-            
-            div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf {
+
+            article > div > div:nth-of-type(2) > div {
                 min-width: 100%;
             }
-            
-            div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf > div {
+
+            article div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf {
+                min-width: 100%;
+            }
+
+            article div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf > div {
                 width: 100% !important;
             }
         `);
@@ -294,7 +298,7 @@
 
                 // Timeline feed 2022-Dec-17
                 if (event.target.responseURL === "https://www.instagram.com/api/v1/feed/timeline/") {
-                    response.feed_items.forEach(item => {
+                    response.feed_items?.forEach(item => {
                         if (item.media_or_ad) {
                             ParseMediaObjFromAPI(item.media_or_ad);
                         }
@@ -305,45 +309,35 @@
                 }
                 // Timeline feed 2022-Apr-21
                 else if (event.target.responseURL.startsWith("https://www.instagram.com/graphql/query/")) {
-                    const media = response.data?.user?.edge_owner_to_timeline_media?.edges;
-                    if (media) {
-                        media.forEach(edge => ParseMediaObjFromGraphQL(edge.node));
-                    }
+                    response.data?.user?.edge_owner_to_timeline_media?.edges?.media?.forEach(edge => ParseMediaObjFromGraphQL(edge.node));
                 }
                 // Explore page 2023-Aug-20
                 else if (event.target.responseURL.startsWith("https://www.instagram.com/api/v1/discover/web/explore_grid/")) {
-                    response.sectional_items.forEach(section => {
+                    response.sectional_items?.forEach(section => {
                         section.layout_content.one_by_two_item?.clips?.items?.forEach(item => ParseMediaObjFromAPI(item.media));
                         section.layout_content.fill_items?.forEach(item => ParseMediaObjFromAPI(item.media));
                     });
                 }
                 // Profile page 2023-Aug-20
                 else if (event.target.responseURL.startsWith("https://www.instagram.com/api/v1/feed/user/")) {
-                    if (response.items) {
-                        response.items.forEach(item => ParseMediaObjFromAPI(item));
-                    }
+                    response.items?.forEach(item => ParseMediaObjFromAPI(item));
                 }
                 else if (event.target.responseURL === "https://www.instagram.com/api/graphql") {
                     // Timeline feed 2024-Jan-20
-                    if (response.data?.xdt_api__v1__feed__timeline__connection?.edges) {
-                        response.data.xdt_api__v1__feed__timeline__connection.edges.forEach(node => {
-                            if (node.node.media) {
-                                ParseMediaObjFromAPI(node.node.media);
-                            } else if (node.node.explore_story?.media) {
-                                ParseMediaObjFromAPI(node.node.explore_story.media);
-                            }
-                        });
-                    }
+                    response.data?.xdt_api__v1__feed__timeline__connection?.edges?.forEach(node => {
+                        if (node.node.media) {
+                            ParseMediaObjFromAPI(node.node.media);
+                        } else if (node.node.explore_story?.media) {
+                            ParseMediaObjFromAPI(node.node.explore_story.media);
+                        }
+                    });
+
                     // Article popup viewer (explore) 2024-Feb-6
-                    else if (response.data?.xdt_api__v1__media__shortcode__web_info?.items) {
-                        response.data.xdt_api__v1__media__shortcode__web_info.items.forEach(item => ParseMediaObjFromAPI(item));
-                    }
+                    response.data?.xdt_api__v1__media__shortcode__web_info?.items.forEach(item => ParseMediaObjFromAPI(item));
                 }
                 // Stories/reels 2024-Jan-25
                 else if (event.target.responseURL.startsWith("https://www.instagram.com/api/v1/feed/reels_media")) {
-                    if (Array.isArray(response.reels_media)) {
-                        response.reels_media.forEach(reel => reel.items.forEach(ParseStoryMediaObjFromAPI));
-                    }
+                    response.reels_media?.forEach(reel => reel.items.forEach(ParseStoryMediaObjFromAPI));
                 }
             }
             catch (err) {
