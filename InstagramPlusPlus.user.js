@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.0
+// @version      4.9.1
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -179,7 +179,7 @@
             });
 
             // Profile pic
-            let profilePicContainer = document.body.querySelector('div.x9ozhqo.x9ozhqo ._aarf:not([igpp_checked])');
+            let profilePicContainer = document.body.querySelector('div.x9ozhqo.x9ozhqo ._aarf:not([igpp_checked]), div.x6s0dn4.x78zum5.xdt5ytf.x1iyjqo2.x2lah0s.xl56j7k.x1n2onr6 > div.x6s0dn4.xamitd3.x1lliihq.xl56j7k.x1n2onr6:not([igpp_checked])');
             if (profilePicContainer) {
                 ProcessProfilePic(profilePicContainer.parentElement).then(() => profilePicContainer.setAttribute("igpp_checked", ""));
             }
@@ -345,10 +345,10 @@
         response.then(response => response.clone().json())
             .then(response => ProcessResponse(input, response))
             .catch(err => {
-                if (!(err instanceof SyntaxError)) {
-                    console.error(err);
-                }
-            });
+            if (!(err instanceof SyntaxError)) {
+                console.error(err);
+            }
+        });
 
         return response;
     }
@@ -640,6 +640,12 @@
                         tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em; text-decoration: none;"><button class="_acan _acap _acas">Download</button></a>`;
                         container.appendChild(tmpDOM.firstChild);
                     }
+                    else {
+                        console.warn("Cannot fetch profile pic for " + username);
+                    }
+                }
+                else {
+                    console.warn("Cannot fetch profile pic for " + username);
                 }
             }
             catch (ex) {
@@ -730,3 +736,4 @@
     }
     /* END - SETTINGS SECTION */
 })();
+
