@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.2
+// @version      4.9.3
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -329,7 +329,7 @@
     };
 
     XMLHttpRequest.prototype.send = function () {
-        if (GM_getValue(STORAGE_VARS.BlockSeenStory) && typeof arguments[0] === 'string' && (arguments[0].includes("PolarisAPIReelSeenMutation") || arguments[0].includes("PolarisStoriesV3SeenDirectMutation"))) {
+        if (GM_getValue(STORAGE_VARS.BlockSeenStory) && typeof arguments[0] === 'string' && (arguments[0].includes("PolarisAPIReelSeenMutation") || arguments[0].includes("PolarisStoriesV3SeenDirectMutation") || arguments[0].includes("PolarisStoriesV3SeenMutation"))) {
             this.abort();
             return;
         }
@@ -341,7 +341,7 @@
     // START - Overwrite fetch method
     /** @type fetch */
     unsafeWindow.fetch = function (input, init) {
-        if (GM_getValue(STORAGE_VARS.BlockSeenStory) && (init?.body?.includes("PolarisAPIReelSeenMutation") || init?.body?.includes("PolarisStoriesV3SeenDirectMutation"))) {
+        if (GM_getValue(STORAGE_VARS.BlockSeenStory) && (init?.body?.includes("PolarisAPIReelSeenMutation") || init?.body?.includes("PolarisStoriesV3SeenDirectMutation") || init?.body?.includes("PolarisStoriesV3SeenMutation"))) {
             return;
         }
 
@@ -349,10 +349,10 @@
         response.then(response => response.clone().json())
             .then(response => ProcessResponse(input, response))
             .catch(err => {
-            if (!(err instanceof SyntaxError)) {
-                console.error(err);
-            }
-        });
+                if (!(err instanceof SyntaxError)) {
+                    console.error(err);
+                }
+            });
 
         return response;
     }
