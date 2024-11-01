@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.3
+// @version      4.9.4
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -305,13 +305,13 @@
         return null;
     }
 
-    const XHR_open = XMLHttpRequest.prototype.open;
-    const XHR_send = XMLHttpRequest.prototype.send;
+    const XHR_open = unsafeWindow.XMLHttpRequest.prototype.open;
+    const XHR_send = unsafeWindow.XMLHttpRequest.prototype.send;
     /** @type fetch */
     const winFetch = unsafeWindow.fetch;
 
     // START - Overwrite XMLHttpRequest methods
-    XMLHttpRequest.prototype.open = function () {
+    unsafeWindow.XMLHttpRequest.prototype.open = function () {
         this.addEventListener("load", event => {
             try {
                 let response = JSON.parse(event.target.responseText);
@@ -328,7 +328,7 @@
         XHR_open.apply(this, arguments);
     };
 
-    XMLHttpRequest.prototype.send = function () {
+    unsafeWindow.XMLHttpRequest.prototype.send = function () {
         if (GM_getValue(STORAGE_VARS.BlockSeenStory) && typeof arguments[0] === 'string' && (arguments[0].includes("PolarisAPIReelSeenMutation") || arguments[0].includes("PolarisStoriesV3SeenDirectMutation") || arguments[0].includes("PolarisStoriesV3SeenMutation"))) {
             this.abort();
             return;
