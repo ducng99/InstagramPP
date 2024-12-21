@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.4
+// @version      4.9.5
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -32,9 +32,10 @@
     const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
     const REPORT_EXPIRE_TIME = 604800000; // 1 week
 
-    let CapturedMediaURLs = {};
-    let CapturedStoriesURLs = {};
-    let ReportCommentsQueue = new Set();
+    const CapturedMediaURLs = {};
+    const CapturedStoriesURLs = {};
+    const CapturedProfilePicURLs = {};
+    const ReportCommentsQueue = new Set();
 
     LoadSettings();
 
@@ -183,9 +184,11 @@
             });
 
             // Profile pic
-            let profilePicContainer = document.body.querySelector('div.x9ozhqo.x9ozhqo ._aarf:not([igpp_checked]), div.x6s0dn4.x78zum5.xdt5ytf.x1iyjqo2.x2lah0s.xl56j7k.x1n2onr6 > div.x6s0dn4.xamitd3.x1lliihq.xl56j7k.x1n2onr6:not([igpp_checked])');
+            let profilePicContainer = document.body.querySelector('div.x9ozhqo.x9ozhqo ._aarf:not([igpp_checked]), div.x6s0dn4.x78zum5.xdt5ytf.x1iyjqo2.x2lah0s.xl56j7k.x1n2onr6 > .x4k7w5x.x1h91t0o.x1h9r5lt.x1jfb8zj.xv2umb2.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1qrby5j:not([igpp_checked])');
             if (profilePicContainer) {
-                ProcessProfilePic(profilePicContainer.parentElement).then(() => profilePicContainer.setAttribute("igpp_checked", ""));
+                if (ProcessProfilePic(profilePicContainer.parentElement)) {
+                    profilePicContainer.setAttribute("igpp_checked", "");
+                }
             }
 
             // News Feed
@@ -389,6 +392,17 @@
                     edge.node.items.forEach(ParseStoryMediaObjFromAPI);
                 }
             });
+
+            // Profile page 2024-Dec-21
+            response.data?.xdt_api__v1__feed__user_timeline_graphql_connection?.edges.forEach(edge => ParseMediaObjFromAPI(edge.node));
+
+            // User stories 2024-Dec-21
+            response.data?.xdt_api__v1__feed__reels_media?.reels_media.forEach(reel => reel.items.forEach(ParseStoryMediaObjFromAPI));
+
+            // User profile pic 2024-Dec-21
+            if (response.data?.user?.hd_profile_pic_url_info) {
+                CapturedProfilePicURLs[response.data.user.username] = response.data.user.hd_profile_pic_url_info.url;
+            }
         }
         // Explore page 2023-Aug-20
         else if (url.startsWith("https://www.instagram.com/api/v1/discover/web/explore_grid")) {
@@ -613,49 +627,26 @@
     /* END - REPORT SPAM SECTION */
 
     /* START - DOWNLOAD PROFILE PIC SECTION */
-    async function ProcessProfilePic(container) {
-        const match = window.location.pathname.match(/^\/([a-z0-9._]+)/i);
-        if (match) {
+    function ProcessProfilePic(container) {
+        const match = window.location.pathname.match(/^\/([A-Za-z0-9._]+)/);
+        if (match && match[1]) {
             const username = match[1];
 
-            try {
-                let response = await fetch(`https://www.instagram.com/api/v1/users/web_profile_info/?username=${username}`, {
-                    headers: {
-                        "X-IG-App-ID": 936619743392459
-                    }
-                });
-                response = await response.json();
+            if (username in CapturedProfilePicURLs) {
+                const profilePicURL = CapturedProfilePicURLs[username];
 
-                if (response?.data?.user?.id) {
-                    const userID = response.data.user.id;
+                const tmpDOM = document.createElement("div");
+                tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em; text-decoration: none;"><button class="_acan _acap _acas">Download</button></a>`;
+                container.appendChild(tmpDOM.firstChild);
 
-                    response = await fetch(`https://www.instagram.com/api/v1/users/${userID}/info/`, {
-                        headers: {
-                            "X-IG-App-ID": 936619743392459
-                        },
-                        credentials: 'include'
-                    });
-                    response = await response.json();
-
-                    if (response?.user?.hd_profile_pic_url_info?.url) {
-                        const profilePicURL = response.user.hd_profile_pic_url_info.url;
-
-                        const tmpDOM = document.createElement("div");
-                        tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em; text-decoration: none;"><button class="_acan _acap _acas">Download</button></a>`;
-                        container.appendChild(tmpDOM.firstChild);
-                    }
-                    else {
-                        console.warn("Cannot fetch profile pic for " + username);
-                    }
-                }
-                else {
-                    console.warn("Cannot fetch profile pic for " + username);
-                }
+                return true;
             }
-            catch (ex) {
-                console.error("Failed to fetch profile pic for " + username, ex);
+            else {
+                console.warn("Cannot find profile pic for " + username);
             }
         }
+
+        return false;
     }
     /* END - DOWNLOAD PROFILE PIC SECTION */
 
