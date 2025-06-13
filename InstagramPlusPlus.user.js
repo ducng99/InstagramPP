@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.6
+// @version      4.9.7
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -451,6 +451,10 @@
         // Stories/reels 2024-Jan-25
         else if (url.startsWith("https://www.instagram.com/api/v1/feed/reels_media")) {
             response.reels_media?.forEach(reel => reel.items.forEach(ParseStoryMediaObjFromAPI));
+        }
+        // View article in chat 2025-Jun-13
+        else if (/www\.instagram\.com\/api\/v1\/media\/\d+\/info/.test(url)) {
+            response.items.forEach(ParseMediaObjFromAPI);
         }
     }
 
