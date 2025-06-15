@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.7
+// @version      4.9.8
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -206,7 +206,7 @@
             // article: a long long time ago
             // div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xat24cr.x1n2onr6.xh8yej3 - Viewing article single page - 2024-Jan-29
             // #media-root - Viewing article w/ popup viewer - 2024-Feb-6
-            let articles = document.body.querySelectorAll("article, div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xat24cr.x1n2onr6.xh8yej3[role!='dialog'], #media-root");
+            let articles = document.body.querySelectorAll('article, div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xat24cr.x1n2onr6.xh8yej3:not([role="dialog"]), #media-root');
             articles.forEach(ProcessArticle);
         };
 
