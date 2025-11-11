@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.8
+// @version      4.9.9
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -153,6 +153,7 @@
             article div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf div.x1qjc9v5.x9f619.x78zum5.x1q0g3np.xln7xf2.xk390pu.x5yr21d.x1n2onr6.x11njtxf > ul._acay > li._acaz,
             article div.x1qjc9v5.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xggy1nq.x11njtxf div.x1qjc9v5.x9f619.x78zum5.x1q0g3np.xln7xf2.xk390pu.x5yr21d.x1n2onr6.x11njtxf > ul._acay > li._acaz > div,
             /* 2025-06-14 */
+            article div:has(> div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf),
             article div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf > div,
             article div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1qjc9v5.x78zum5.x1q0g3np.x5yr21d.xw2csxc.x10wlt62.x1n2onr6.x1rohswg.xfk6m8,
             article div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1qjc9v5.x78zum5.x1q0g3np.x5yr21d.xw2csxc.x10wlt62.x1n2onr6.x1rohswg.xfk6m8 > div,
@@ -165,10 +166,10 @@
 
         // Viewing single article
         GM_addStyle(`
-            div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xat24cr.x1n2onr6.xh8yej3[role!="dialog"] {
+            div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xat24cr.x1n2onr6.xh8yej3:not([role="dialog"]) {
                 max-width: inherit !important;
             }
-            div:has(> div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xat24cr.x1n2onr6.xh8yej3[role!="dialog"] ) {
+            div:has(> div.x6s0dn4.x78zum5.xdt5ytf.xdj266r.xat24cr.x1n2onr6.xh8yej3:not([role="dialog"])) {
                 max-width: 95vh;
             }
         `);
