@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.9
+// @version      4.9.10
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -127,7 +127,9 @@
         // News feed
         GM_addStyle(`
             div.x9f619.xjbqb8w.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619,
-            div.x9f619.xjbqb8w.x78zum5.x15mokao.x1ga7v0g.x16uus16.xbiv7yw.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619 {
+            div.x9f619.xjbqb8w.x78zum5.x15mokao.x1ga7v0g.x16uus16.xbiv7yw.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x6s0dn4.x1oa3qoh.x1nhvcw1 > div.x9f619,
+            /* 2016-09-10 */
+            div.xf68679 {
                 max-width: inherit !important;
                 width: 100% !important;
             }
@@ -159,7 +161,16 @@
             article div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1qjc9v5.x78zum5.x1q0g3np.x5yr21d.xw2csxc.x10wlt62.x1n2onr6.x1rohswg.xfk6m8 > div,
             article div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1qjc9v5.x78zum5.x1q0g3np.x5yr21d.xw2csxc.x10wlt62.x1n2onr6.x1rohswg.xfk6m8 > div > ul._acay,
             article div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1qjc9v5.x78zum5.x1q0g3np.x5yr21d.xw2csxc.x10wlt62.x1n2onr6.x1rohswg.xfk6m8 > div > ul._acay > li._acaz,
-            article div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1qjc9v5.x78zum5.x1q0g3np.x5yr21d.xw2csxc.x10wlt62.x1n2onr6.x1rohswg.xfk6m8 > div > ul._acay > li._acaz > div {
+            article div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1qjc9v5.x78zum5.x1q0g3np.x5yr21d.xw2csxc.x10wlt62.x1n2onr6.x1rohswg.xfk6m8 > div > ul._acay > li._acaz > div,
+            /* 2026-09-10 */
+            article div.x6s0dn4.xyzq4qe.x78zum5.xdt5ytf.x2lah0s.xl56j7k.x1n2onr6.x5ur3kl.x6usi7g.x1bs97v6.x18dxpii.x13fuv20.x18b5jzi.x1q0q8m5.x1t7ytsu.x178xt8z.x1lun4ml.xso031l.xpilrb4.x1i5p2am.x1whfx0g.xr2y4jy.x1ihp6rs.x6ikm8r.x10wlt62,
+            article div.x6s0dn4.xyzq4qe.x78zum5.xdt5ytf.x2lah0s.xl56j7k.x1n2onr6.x5ur3kl.x6usi7g.x1bs97v6.x18dxpii.x13fuv20.x18b5jzi.x1q0q8m5.x1t7ytsu.x178xt8z.x1lun4ml.xso031l.xpilrb4.x1i5p2am.x1whfx0g.xr2y4jy.x1ihp6rs.x6ikm8r.x10wlt62 > div,
+            article div.x6s0dn4.xyzq4qe.x78zum5.xdt5ytf.x2lah0s.xl56j7k.x1n2onr6.x5ur3kl.x6usi7g.x1bs97v6.x18dxpii.x13fuv20.x18b5jzi.x1q0q8m5.x1t7ytsu.x178xt8z.x1lun4ml.xso031l.xpilrb4.x1i5p2am.x1whfx0g.xr2y4jy.x1ihp6rs.x6ikm8r.x10wlt62 a.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.x3ct3a4.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.x1hl2dhg.xggy1nq.x1a2a7pz.x4gyw5p._a6hd,
+            article div.x6s0dn4.xyzq4qe.x78zum5.xdt5ytf.x2lah0s.xl56j7k.x1n2onr6.x5ur3kl.x6usi7g.x1bs97v6.x18dxpii.x13fuv20.x18b5jzi.x1q0q8m5.x1t7ytsu.x178xt8z.x1lun4ml.xso031l.xpilrb4.x1i5p2am.x1whfx0g.xr2y4jy.x1ihp6rs.x6ikm8r.x10wlt62 div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf,
+            article div.x6s0dn4.xyzq4qe.x78zum5.xdt5ytf.x2lah0s.xl56j7k.x1n2onr6.x5ur3kl.x6usi7g.x1bs97v6.x18dxpii.x13fuv20.x18b5jzi.x1q0q8m5.x1t7ytsu.x178xt8z.x1lun4ml.xso031l.xpilrb4.x1i5p2am.x1whfx0g.xr2y4jy.x1ihp6rs.x6ikm8r.x10wlt62 div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1n2onr6,
+            article div.x6s0dn4.xyzq4qe.x78zum5.xdt5ytf.x2lah0s.xl56j7k.x1n2onr6.x5ur3kl.x6usi7g.x1bs97v6.x18dxpii.x13fuv20.x18b5jzi.x1q0q8m5.x1t7ytsu.x178xt8z.x1lun4ml.xso031l.xpilrb4.x1i5p2am.x1whfx0g.xr2y4jy.x1ihp6rs.x6ikm8r.x10wlt62 div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1n2onr6 ul,
+            article div.x6s0dn4.xyzq4qe.x78zum5.xdt5ytf.x2lah0s.xl56j7k.x1n2onr6.x5ur3kl.x6usi7g.x1bs97v6.x18dxpii.x13fuv20.x18b5jzi.x1q0q8m5.x1t7ytsu.x178xt8z.x1lun4ml.xso031l.xpilrb4.x1i5p2am.x1whfx0g.xr2y4jy.x1ihp6rs.x6ikm8r.x10wlt62 div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1n2onr6 ul > li,
+            article div.x6s0dn4.xyzq4qe.x78zum5.xdt5ytf.x2lah0s.xl56j7k.x1n2onr6.x5ur3kl.x6usi7g.x1bs97v6.x18dxpii.x13fuv20.x18b5jzi.x1q0q8m5.x1t7ytsu.x178xt8z.x1lun4ml.xso031l.xpilrb4.x1i5p2am.x1whfx0g.xr2y4jy.x1ihp6rs.x6ikm8r.x10wlt62 div.x1qjc9v5.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x78zum5.xdt5ytf.x2lah0s.xk390pu.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.xggy1nq.x11njtxf div.x1n2onr6 ul > li > div {
                 width: 100% !important;
             }
         `);
@@ -181,8 +192,8 @@
             let storyMenu = document.body.querySelector('._ac0m, [class="x78zum5"]:has(svg.x1lliihq.x1n2onr6.xq3z1fi)');
             if (storyMenu && !storyMenu.querySelector('.igpp_download')) {
                 const newNode = document.createElement('div');
-                newNode.innerHTML = '<button class="igpp_download" type="button" style="border: none; background: transparent;"><div class="x6s0dn4 x78zum5 xdt5ytf xl56j7k"><svg width="18" height="18" fill="#ffffff" color="#ffffff" class="x1lliihq x1n2onr6 x9bdzbf" viewBox="0 0 16 16" aria-label="Download"><path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708z"/></svg></div></button>';
-                const downloadButton = newNode.firstChild;
+                newNode.innerHTML = '<button class="igpp_download" type="button" style="border: none; background: transparent; cursor: pointer"><div class="x6s0dn4 x78zum5 xdt5ytf xl56j7k"><svg width="18" height="18" fill="#ffffff" color="#ffffff" class="x1lliihq x1n2onr6 x9bdzbf" viewBox="0 0 16 16" aria-label="Download"><path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708z"/></svg></div></button>';
+                const downloadButton = newNode.lastChild;
                 downloadButton.addEventListener('click', DownloadStory);
                 storyMenu.insertBefore(downloadButton, storyMenu.firstChild);
             }
@@ -301,17 +312,19 @@
 
     function GetMediaSrc(article) {
         let mediaIndex = -1;
-        const mediaCountDOM = article.querySelector("div._acvz._acnc");
+        const mediaCountDOM = article.querySelector("div._acvz._acnc, div.x78zum5.x1q0g3np.x1rvut6x.x11xpdln.x9lcvmn");
 
         if (mediaCountDOM && mediaCountDOM.children.length > 1) {
-            let current = mediaCountDOM.querySelector("._acnf");
+            let current = mediaCountDOM.querySelector("._acnf, .x18cabeq");
             mediaIndex = [...mediaCountDOM.children].indexOf(current);
         }
+        console.debug("media index", mediaIndex);
 
         const dateDOM = article.querySelector("a[href^='/p/']");
         if (dateDOM) {
             const postID = /\/p\/([a-z0-9-_]+)/i.exec(dateDOM.href)[1];
             const linkR = CapturedMediaURLs[postID];
+            console.debug("stored links", postID, linkR);
 
             if (linkR) {
                 if (mediaIndex === -1) {
@@ -488,14 +501,14 @@
         }
     }
 
-    function ParseMediaObjFromAPI(item, save = true) {
-        const postID = item.code ?? "";
+    function ParseMediaObjFromAPI(item, save = true, parentPostID = null) {
+        const postID = parentPostID ?? item.code ?? "";
 
         if (item.carousel_media) {
             let links = [];
 
             item.carousel_media.forEach(media => {
-                let link = ParseMediaObjFromAPI(media, false);
+                let link = ParseMediaObjFromAPI(media, false, postID);
                 links.push(link.src);
             });
 
