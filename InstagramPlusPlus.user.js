@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.11
+// @version      4.9.12
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -320,9 +320,9 @@
         }
         console.debug("media index", mediaIndex);
 
-        const dateDOM = article.querySelector("a[href^='/p/']");
+        const dateDOM = article.querySelector("a[href^='/p/'], a[href*='/reel/']");
         if (dateDOM) {
-            const postID = /\/p\/([a-z0-9-_]+)/i.exec(dateDOM.href)[1];
+            const postID = /(?:\/p\/([a-z0-9-_]+)|\/reel\/([a-z0-9-_]+))/i.exec(dateDOM.href)[1];
             const linkR = CapturedMediaURLs[postID];
             console.debug("stored links", postID, linkR);
 
@@ -383,10 +383,10 @@
         response.then(response => response.clone().json())
             .then(response => ProcessResponse(input, response))
             .catch(err => {
-                if (!(err instanceof SyntaxError)) {
-                    console.error(err);
-                }
-            });
+            if (!(err instanceof SyntaxError)) {
+                console.error(err);
+            }
+        });
 
         return response;
     }
