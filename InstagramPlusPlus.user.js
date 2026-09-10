@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.10
+// @version      4.9.11
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -461,6 +461,11 @@
 
             // Stories/reels 2024-Jul-02
             response.data?.xdt_api__v1__feed__reels_media__connection?.edges?.forEach(edge => edge.node.items.forEach(ParseStoryMediaObjFromAPI));
+
+            // Profile pic 2026-09-10
+            if (response.data?.user?.hd_profile_pic_url_info) {
+                CapturedProfilePicURLs[response.data.user.username] = response.data.user.hd_profile_pic_url_info.url;
+            }
         }
         // Stories/reels 2024-Jan-25
         else if (url.startsWith("https://www.instagram.com/api/v1/feed/reels_media")) {
@@ -671,7 +676,7 @@
                 const profilePicURL = CapturedProfilePicURLs[username];
 
                 const tmpDOM = document.createElement("div");
-                tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em; text-decoration: none;"><button class="_acan _acap _acas">Download</button></a>`;
+                tmpDOM.innerHTML = `<a href="${profilePicURL}" download="${username}.jpg" target="_blank" style="align-self: center; margin-top: 1em; text-decoration: none;"><button class="x1i10hfl xjqpnuy xc5r6h4 xqeqjp1 x1phubyo x972fbf x10w94by x1qhh985 x14e42zd xdl72j9 x2lah0s x3ct3a4 xdj266r x14z9mp xat24cr x1lziwak x2lwn1j xeuugli xexx8yu x18d9i69 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1q0g3np x1lku1pv x1a2a7pz x6s0dn4 xjyslct x1ejq31n x18oe1m7 x1sy0etr xstzfhl x9f619 x1ypdohk x78zum5 x1f6kntn xwhw2v2 xl56j7k x17ydfre x1n2onr6 x2b8uid xlyipyv x87ps6o x14atkfc x5c86q x18br7mf x1i0vuye x6nl9eh x1a5l9x9 x7vuprf x1mg3h75 xn3w4p2 x106a9eq x1xnnf8n x1aavi5t x1h6iz8e xixcex4 xk4oym4 xl3ioum">Download</button></a>`;
                 container.appendChild(tmpDOM.firstChild);
 
                 return true;
