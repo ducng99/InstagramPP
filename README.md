@@ -11,8 +11,6 @@ A "powerful" tool provides enhanced features to Instagram web version
 - Set default volume for videos
 - Hide "Paid partnership with..." posts
 - Enlarge single article view and news feed
-- ~~Auto report & hide spam comments~~ *(not updated anymore)*
-  - Uses closed-source WASM
 
 ## Installation
 

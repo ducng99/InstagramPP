@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram++
 // @namespace    maxhyt.instagrampp
-// @version      4.9.13
+// @version      4.10.0
 // @description  Add addtional features to Instagram
 // @author       Maxhyt
 // @license      AGPL-3.0
@@ -24,23 +24,17 @@
     "use strict"
 
     const STORAGE_VARS = {
-        BlockSeenStory: "block_seen_story", AutoReportSpamComments: "auto_report_spam_comments", DefaultVideoVolume: "default_video_volume",
+        BlockSeenStory: "block_seen_story", DefaultVideoVolume: "default_video_volume",
         HideSponsoredPosts: "hide_sponsored_posts", EnlargeArticle: "enlarge_article",
-        ReportedComments: "reported_comments",
     };
 
     const SETTINGS_PAGE = "https://static.ducng.dev/InstagramPP/";
-    const REPORT_EXPIRE_TIME = 604800000; // 1 week
 
     const CapturedMediaURLs = {};
     const CapturedStoriesURLs = {};
     const CapturedProfilePicURLs = {};
-    const ReportCommentsQueue = new Set();
 
     LoadSettings();
-
-    // Loads IsCommentSpam WASM
-    LoadIsCommentSpam();
 
     window.addEventListener('DOMContentLoaded', () => {
         // Handle initial scripts/data for articles
@@ -102,6 +96,24 @@
                         }
                     });
                 }
+                // Profile page 2026-Nov-20
+                else if (script.innerHTML.includes("xdt_api__v1__profile_timeline")) {
+                    const content = JSON.parse(script.innerHTML);
+                    const nodes = content.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xdt_api__v1__profile_timeline.profile_grid_items;
+                    nodes.forEach(node => ParseMediaObjFromAPI(node.media));
+                }
+                // Profile page 2026-Nov-20
+                else if (script.innerHTML.includes("xdt_api__v1__feed__user_timeline_graphql_connection")) {
+                    const content = JSON.parse(script.innerHTML);
+                    const nodes = content.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.xdt_api__v1__feed__user_timeline_graphql_connection.edges;
+                    nodes.forEach(node => ParseMediaObjFromAPI(node.node));
+                }
+                // Profile pic 2026-Nov-20
+                else if (script.innerHTML.includes("PolarisProfilePageContentQueryRelayPreloader")) {
+                    const content = JSON.parse(script.innerHTML);
+                    const user = content.require[0][3][0].__bbox.require[0][3][1].__bbox.result.data.user;
+                    CapturedProfilePicURLs[user.username] = user.hd_profile_pic_url_info.url;
+                }
             }
             catch (ex) {
                 console.error(ex);
@@ -111,16 +123,6 @@
         MainLoop();
         ReportLoop();
     });
-
-    // Clear old reported comments
-    const reportedComments = GetReportedComments();
-    Object.entries(reportedComments).forEach(([key, value]) => {
-        if (value < Date.now() - REPORT_EXPIRE_TIME) {
-            delete reportedComments[key];
-        }
-    });
-
-    GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(reportedComments));
 
     // Enlarge news feed
     if (GM_getValue(STORAGE_VARS.EnlargeArticle)) {
@@ -238,7 +240,7 @@
                 alert("Cannot get the link");
             }
         } else {
-            alert("Cannot get story ID");
+            alert("Cannot get story ID\nIf this is the first story opened, you need to view the next one and go back");
         }
     }
 
@@ -280,33 +282,6 @@
                 feedMenu.classList.remove("x1o61qjw", "xrvj5dj");
                 feedMenu.style.display = "flex";
             }
-        }
-
-        // Report spam comments
-        if (GM_getValue(STORAGE_VARS.AutoReportSpamComments) && 'isCommentSpam' in window) {
-            const list_comments = article.querySelectorAll('ul._a9ym:not([igpp_checked]), ul._a9yo > div._aa06:not([igpp_checked])');
-            const reportedComments = GetReportedComments();
-
-            list_comments.forEach(comment_container => {
-                const commentText = comment_container.querySelector('._a9zr > span, ._a9zs > span')?.textContent;
-                const timeLink = comment_container.querySelector('a._a9zg._a6hd');
-                const match = /\/p\/[a-z0-9-_]+\/c\/(\d+)/i.exec(timeLink?.href);
-
-                if (commentText && timeLink && match && match[1]) {
-                    const comment_id = match[1];
-                    comment_container.setAttribute("igpp_checked", "");
-
-                    if (!(comment_id in reportedComments)) {
-                        if (window.isCommentSpam(commentText)) {
-                            comment_container.remove();
-                            ReportCommentsQueue.add(comment_id);
-                        }
-                    }
-                    else {
-                        comment_container.remove();
-                    }
-                }
-            });
         }
     }
 
@@ -456,13 +431,16 @@
                 }
             });
 
+            // Profile page 2026-Nov-20
+            response.data?.xdt_api__v1__feed__user_timeline_graphql_connection?.edges.forEach(edge => ParseMediaObjFromAPI(edge.node));
+
             // Article popup viewer (explore) 2024-Feb-6
             response.data?.xdt_api__v1__media__shortcode__web_info?.items.forEach(ParseMediaObjFromAPI);
 
             // Stories/reels 2024-Jul-02
             response.data?.xdt_api__v1__feed__reels_media__connection?.edges?.forEach(edge => edge.node.items.forEach(ParseStoryMediaObjFromAPI));
 
-            // Profile pic 2026-09-10
+            // Profile pic 2026-Sep-10
             if (response.data?.user?.hd_profile_pic_url_info) {
                 CapturedProfilePicURLs[response.data.user.username] = response.data.user.hd_profile_pic_url_info.url;
             }
@@ -548,128 +526,6 @@
         }
     }
 
-    /* START - REPORT SPAM SECTION */
-    function LoadIsCommentSpam() {
-        let loadGoWasmInterval = 0;
-        loadGoWasmInterval = setInterval(() => {
-            if (window.Go) {
-                clearInterval(loadGoWasmInterval);
-
-                const go = new window.Go();
-                GetICSWasm()
-                    .then(wasmBuffer => WebAssembly.instantiate(wasmBuffer, go.importObject))
-                    .then(result => { go.run(result.instance); })
-                    .catch(err => { console.error(err); });
-            }
-        }, 1000);
-    }
-
-    function GetICSWasm() {
-        return new Promise((resolve, reject) => {
-            GM_xmlhttpRequest({
-                method: "GET",
-                url: "https://github.com/ducng99/is-comment-spam-wasm/releases/latest/download/is-comment-spam.wasm",
-                responseType: "arraybuffer",
-                onload: function (response) {
-                    resolve(response.response);
-                },
-                onerror: function (err) {
-                    reject(err);
-                }
-            });
-        });
-    }
-
-    function ReportLoop() {
-        const loopId = setInterval(() => {
-            if (GM_getValue(STORAGE_VARS.AutoReportSpamComments, false)) {
-                if (ReportCommentsQueue.size > 0) {
-                    const [id] = ReportCommentsQueue;
-                    ReportCommentsQueue.delete(id);
-
-                    SendReport(id).then(ok => {
-                        if (ok) {
-                            AddReportedComment(id);
-                        }
-                    });
-                }
-            } else {
-                clearInterval(loopId);
-            }
-        }, 2000);
-    }
-
-    async function SendReport(comment_id) {
-        const requestForm = new FormData;
-        requestForm.append("entry_point", "1");
-        requestForm.append("location", "3");
-        requestForm.append("object_type", "2");
-        requestForm.append("object_id", comment_id);
-        requestForm.append("container_module", "postPage");
-        requestForm.append("frx_prompt_request_type", "1");
-
-        try {
-            let res_report_request = await fetch("https://www.instagram.com/reports/web/get_frx_prompt/", {
-                body: new URLSearchParams(requestForm),
-                method: 'POST',
-                headers: {
-                    "X-CSRFToken": window.Cookies.get('csrftoken'),
-                    "X-Instagram-AJAX": unsafeWindow._sharedData.rollout_hash,
-                    "X-IG-App-ID": 936619743392459
-                }
-            });
-
-            res_report_request = await res_report_request.json();
-
-            if (res_report_request.status === "ok") {
-                const context = res_report_request.response.context;
-
-                const reportForm = new FormData;
-                reportForm.append("context", context);
-                reportForm.append("selected_tag_type", "ig_spam_v3");
-
-                let res_report = await fetch("https://www.instagram.com/reports/web/log_tag_selected/", {
-                    body: new URLSearchParams(reportForm),
-                    method: 'POST',
-                    headers: {
-                        "X-CSRFToken": window.Cookies.get('csrftoken'),
-                        "X-Instagram-AJAX": unsafeWindow._sharedData.rollout_hash,
-                        "X-IG-App-ID": 936619743392459
-                    }
-                });
-                res_report = await res_report.json();
-
-                if (res_report.status === "ok") {
-                    console.log(`Report ${comment_id} success`);
-                    return true;
-                }
-                else {
-                    console.error("Failed to send report", res_report);
-                }
-            }
-            else {
-                console.error("Failed to send report request", res_report_request);
-            }
-        }
-        catch (ex) {
-            console.error("Failed send report", ex);
-        }
-
-        return false;
-    }
-
-    function GetReportedComments() {
-        return JSON.parse(GM_getValue(STORAGE_VARS.ReportedComments, "{}"));
-    }
-
-    function AddReportedComment(id) {
-        let storedIDs = GetReportedComments();
-        storedIDs[id] = Date.now();
-        GM_setValue(STORAGE_VARS.ReportedComments, JSON.stringify(storedIDs));
-    }
-
-    /* END - REPORT SPAM SECTION */
-
     /* START - DOWNLOAD PROFILE PIC SECTION */
     function ProcessProfilePic(container) {
         const match = window.location.pathname.match(/^\/([A-Za-z0-9._]+)/);
@@ -704,10 +560,6 @@
             GM_setValue(STORAGE_VARS.BlockSeenStory, true);
         }
 
-        if (GM_getValue(STORAGE_VARS.AutoReportSpamComments, null) === null) {
-            GM_setValue(STORAGE_VARS.AutoReportSpamComments, true);
-        }
-
         if (GM_getValue(STORAGE_VARS.HideSponsoredPosts, null) === null) {
             GM_setValue(STORAGE_VARS.HideSponsoredPosts, true);
         }
@@ -728,17 +580,12 @@
         if (window.location.href.startsWith(SETTINGS_PAGE)) {
             window.addEventListener('load', () => {
                 const blockSeenStoryElement = document.getElementById(STORAGE_VARS.BlockSeenStory);
-                const autoReportSpamCommentsElement = document.getElementById(STORAGE_VARS.AutoReportSpamComments);
                 const hideSponsoredPostsElement = document.getElementById(STORAGE_VARS.HideSponsoredPosts);
                 const enlargeArticleElement = document.getElementById(STORAGE_VARS.EnlargeArticle);
                 const defaultVideoVolumeElement = document.getElementById(STORAGE_VARS.DefaultVideoVolume);
 
                 if (blockSeenStoryElement) {
                     blockSeenStoryElement.checked = GM_getValue(STORAGE_VARS.BlockSeenStory);
-                }
-
-                if (autoReportSpamCommentsElement) {
-                    autoReportSpamCommentsElement.checked = GM_getValue(STORAGE_VARS.AutoReportSpamComments);
                 }
 
                 if (hideSponsoredPostsElement) {
@@ -756,9 +603,6 @@
                 document.getElementById("save_settings")?.addEventListener('click', () => {
                     if (blockSeenStoryElement) {
                         GM_setValue(STORAGE_VARS.BlockSeenStory, blockSeenStoryElement.checked);
-                    }
-                    if (autoReportSpamCommentsElement) {
-                        GM_setValue(STORAGE_VARS.AutoReportSpamComments, autoReportSpamCommentsElement.checked);
                     }
                     if (hideSponsoredPostsElement) {
                         GM_setValue(STORAGE_VARS.HideSponsoredPosts, hideSponsoredPostsElement.checked);
